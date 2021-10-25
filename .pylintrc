@@ -1,0 +1,15 @@
+[MASTER]
+jobs = 0
+￼
+[MESSAGES CONTROL]
+disable = missing-class-docstring,
+￼         missing-function-docstring,
+￼         missing-module-docstring
+
+[FORMAT]
+max-line-length = 120
+￼
+[BASIC]
+good-names = i,
+￼            j,
+￼            k
