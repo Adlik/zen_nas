@@ -3,12 +3,14 @@
 
 import setuptools
 
-INSTALL_REQUIRES = []
+INSTALL_REQUIRES = [
+    'numpy'
+]
 
 TEST_REQUIRES = [
     'bandit',
     'flake8',
-    'mypy',
+    'mypy==0.812',
     'pylint',
     'pytest-cov',
     'pytest-flake8',
