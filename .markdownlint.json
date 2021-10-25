@@ -2,6 +2,6 @@
     "default": true,
     "line-length": {
         "line_length": 120,
-￼       "tables": false
+        "tables": false
     }
 }

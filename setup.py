@@ -3,9 +3,7 @@
 
 import setuptools
 
-INSTALL_REQUIRES = [
-    'numpy'
-]
+INSTALL_REQUIRES = []
 
 TEST_REQUIRES = [
     'bandit',
