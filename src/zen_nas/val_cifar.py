@@ -6,6 +6,7 @@ Copyright (C) 2010-2021 Alibaba Group Holding Limited.
 Usage:
 python val_cifar.py --dataset cifar10 --gpu 0 --arch zennet_cifar10_model_size05M_res32
 '''
+
 import os, sys, argparse, math, PIL
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 

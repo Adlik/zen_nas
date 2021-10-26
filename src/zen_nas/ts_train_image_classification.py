@@ -1,6 +1,5 @@
-'''
-Copyright (C) 2010-2021 Alibaba Group Holding Limited.
-'''
+# Copyright 2019 ZTE corporation. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.
 
 import os, sys, copy, time, logging, argparse
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -37,7 +36,9 @@ except ImportError:
 import ModelLoader, DataLoader
 import global_utils
 
+
 def get_logger(log_filename=None, level=logging.INFO):
+    
     logger = logging.getLogger()
     if log_filename is not None:
         distutils.dir_util.mkpath(os.path.dirname(log_filename))

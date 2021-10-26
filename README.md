@@ -1,4 +1,8 @@
-# [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+# zen_nas
+
+[![Build Status](https://dev.azure.com/Adlik/GitHub/_apis/build/status/Adlik.zen_nas?branchName=main)](https://dev.azure.com/Adlik/GitHub/_build/latest?definitionId=5&branchName=main)
+[![Bors enabled](https://bors.tech/images/badge_small.svg)](https://app.bors.tech/repositories/38905)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ## Introduction
 
@@ -216,4 +220,4 @@ https://pytorch.org/vision/0.8/_modules/torchvision/models/resnet.html
 
 ## Copyright
 
-Copyright (C) 2010-2021 Alibaba Group Holding Limited.
+Copyright 2019 ZTE corporation. All Rights Reserved.
