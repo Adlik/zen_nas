@@ -3,7 +3,13 @@
 
 import setuptools
 
-INSTALL_REQUIRES = []
+INSTALL_REQUIRES = [
+    'numpy',
+    'torch >= 1.6',
+    'ptflops',
+    'tensorboard >= 1.15',
+    'apex'
+]
 
 TEST_REQUIRES = [
     'bandit',
@@ -25,5 +31,5 @@ setuptools.setup(
     extras_require={
         'test': TEST_REQUIRES
     },
-    python_requires='>= 3.6'
+    python_requires='>= 3.7'
 )
