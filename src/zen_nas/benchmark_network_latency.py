@@ -2,6 +2,8 @@
 Copyright (C) 2010-2021 Alibaba Group Holding Limited.
 '''
 
+"""compute model latency"""
+
 import os,sys, argparse
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -14,6 +16,7 @@ import ZenNet
 
 
 def __get_latency__(model, batch_size, resolution, channel, gpu, benchmark_repeat_times, fp16):
+    """compute model latency"""
     device = torch.device('cuda:{}'.format(gpu))
     torch.backends.cudnn.benchmark = True
 
@@ -42,6 +45,7 @@ def __get_latency__(model, batch_size, resolution, channel, gpu, benchmark_repea
 
 
 def get_robust_latency_mean_std(model, batch_size, resolution, channel, gpu, benchmark_repeat_times=30, fp16=False):
+    """get robust latency"""
     robust_repeat_times = 10
     latency_list = []
     model = model.cuda(gpu)
@@ -62,6 +66,7 @@ def get_robust_latency_mean_std(model, batch_size, resolution, channel, gpu, ben
 
 
 def main(opt, argv):
+    """get model and compute latency"""
     global_utils.create_logging()
 
     batch_size_list = [int(x) for x in opt.batch_size_list.split(',')]
@@ -86,6 +91,17 @@ def main(opt, argv):
 
 
 def get_model_latency(model, batch_size, resolution, in_channels, gpu, repeat_times, fp16):
+    """get model latency
+
+        :param model: model
+        :param batch_size (int): batch size
+        :param resolution (int): input image size
+        :param in_channels (int): input channels
+        :param gpu (int): gpu index
+        :param repeat_times (int): repeat times
+        :param fp16 (bool): whether using half precision
+        :return latency
+    """
     if gpu is not None:
         device = torch.device('cuda:{}'.format(gpu))
     else:
@@ -115,6 +131,7 @@ def get_model_latency(model, batch_size, resolution, in_channels, gpu, repeat_ti
 
 
 def parse_cmd_options(argv):
+    """parse command line"""
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, default=None, help='number of instances in one mini-batch.')
     parser.add_argument('--input_image_size', type=int, default=None,

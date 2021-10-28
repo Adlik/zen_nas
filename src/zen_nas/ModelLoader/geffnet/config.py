@@ -1,5 +1,6 @@
 """ Global layer config state
 """
+
 from typing import Any, Optional
 
 __all__ = [
@@ -23,11 +24,13 @@ _SCRIPTABLE = False
 
 
 def is_no_jit():
+    """get no_jit state"""
     return _NO_JIT
 
 
 class set_no_jit:
     def __init__(self, mode: bool) -> None:
+        """set no_jit and save previous state"""
         global _NO_JIT
         self.prev = _NO_JIT
         _NO_JIT = mode
@@ -42,10 +45,12 @@ class set_no_jit:
 
 
 def is_exportable():
+    """get exportable state"""
     return _EXPORTABLE
 
 
 class set_exportable:
+    """set exportable and save previous state"""
     def __init__(self, mode: bool) -> None:
         global _EXPORTABLE
         self.prev = _EXPORTABLE
@@ -61,10 +66,12 @@ class set_exportable:
 
 
 def is_scriptable():
+    """get scriptable state"""
     return _SCRIPTABLE
 
 
 class set_scriptable:
+    """set scriptable and save previous state"""
     def __init__(self, mode: bool) -> None:
         global _SCRIPTABLE
         self.prev = _SCRIPTABLE

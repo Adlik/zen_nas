@@ -2,6 +2,7 @@
 Copyright (C) 2010-2021 Alibaba Group Holding Limited.
 '''
 
+"""compute gradient norm score"""
 
 import os, sys, time
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -12,6 +13,7 @@ import torch.nn.functional as F
 
 
 def network_weight_gaussian_init(net: nn.Module):
+    """gaussian initialization"""
     with torch.no_grad():
         for m in net.modules():
             if isinstance(m, nn.Conv2d):
@@ -32,6 +34,7 @@ def network_weight_gaussian_init(net: nn.Module):
 
 
 def cross_entropy(logit, target):
+    """compute cross entropy loss"""
     # target must be one-hot format!!
     prob_logit = F.log_softmax(logit, dim=1)
     loss = -(target * prob_logit).sum(dim=1).mean()
@@ -39,7 +42,7 @@ def cross_entropy(logit, target):
 
 
 def compute_nas_score(gpu, model, resolution, batch_size):
-
+    """compute gradient norm score"""
     model.train()
     model.requires_grad_(True)
 

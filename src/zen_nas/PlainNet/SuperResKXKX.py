@@ -2,6 +2,7 @@
 Copyright (C) 2010-2021 Alibaba Group Holding Limited.
 '''
 
+"""define SuperResKXKX class with different kernel size"""
 
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -15,6 +16,8 @@ import global_utils
 
 
 class SuperResKXKX(PlainNetSuperBlockClass):
+    """Resnet BasicBlock-like block"""
+
     def __init__(self, in_channels=None, out_channels=None, stride=None, bottleneck_channels=None, sub_layers=None, kernel_size=None,
                  no_create=False, no_reslink=False, no_BN=False, use_se=False, **kwargs):
         super(SuperResKXKX, self).__init__(**kwargs)
@@ -69,6 +72,8 @@ class SuperResKXKX(PlainNetSuperBlockClass):
             self.module_list = None
 
     def forward_pre_relu(self, x):
+        """calculate the value before relu"""
+
         output = x
         for block in self.block_list[0:-1]:
             output = block(output)
@@ -85,9 +90,13 @@ class SuperResKXKX(PlainNetSuperBlockClass):
         )
 
     def encode_structure(self):
+        """pack channels and sub_layers to a list"""
+
         return [self.out_channels, self.sub_layers, self.bottleneck_channels]
 
     def split(self, split_layer_threshold):
+        """split the layer when exceeding threshold"""
+
         if self.sub_layers >= split_layer_threshold:
             new_sublayers_1 = split_layer_threshold // 2
             new_sublayers_2 = self.sub_layers - new_sublayers_1
@@ -101,6 +110,8 @@ class SuperResKXKX(PlainNetSuperBlockClass):
             return str(self)
 
     def structure_scale(self, scale=1.0, channel_scale=None, sub_layer_scale=None):
+        """ adjust the number to a specific multiple or range"""
+
         if channel_scale is None:
             channel_scale = scale
         if sub_layer_scale is None:
@@ -113,9 +124,14 @@ class SuperResKXKX(PlainNetSuperBlockClass):
         return type(self).__name__ + '({},{},{},{},{})'.format(self.in_channels, new_out_channels,
                                                                self.stride, new_bottleneck_channels, new_sub_layers)
 
-
     @classmethod
     def create_from_str(cls, s, **kwargs):
+        """ class method
+
+            :param s (str): SuperRes block str
+            :return cls instance
+        """
+
         assert cls.is_instance_from_str(s)
         idx = _get_right_parentheses_index_(s)
         assert idx is not None
@@ -141,6 +157,8 @@ class SuperResKXKX(PlainNetSuperBlockClass):
 
 
 class SuperResK3K3(SuperResKXKX):
+    """ kernel size 3x3"""
+
     def __init__(self, in_channels=None, out_channels=None, stride=None, bottleneck_channels=None, sub_layers=None, no_create=False, **kwargs):
         super(SuperResK3K3, self).__init__(in_channels=in_channels, out_channels=out_channels, stride=stride,
                                            bottleneck_channels=bottleneck_channels, sub_layers=sub_layers,
@@ -148,6 +166,8 @@ class SuperResK3K3(SuperResKXKX):
                                            no_create=no_create, **kwargs)
 
 class SuperResK5K5(SuperResKXKX):
+    """kernel size 5x5"""
+
     def __init__(self, in_channels=None, out_channels=None, stride=None, bottleneck_channels=None, sub_layers=None, no_create=False, **kwargs):
         super(SuperResK5K5, self).__init__(in_channels=in_channels, out_channels=out_channels, stride=stride,
                                            bottleneck_channels=bottleneck_channels, sub_layers=sub_layers,
@@ -155,6 +175,8 @@ class SuperResK5K5(SuperResKXKX):
                                            no_create=no_create, **kwargs)
 
 class SuperResK7K7(SuperResKXKX):
+    """kernel size 7x7"""
+
     def __init__(self, in_channels=None, out_channels=None, stride=None, bottleneck_channels=None, sub_layers=None, no_create=False, **kwargs):
         super(SuperResK7K7, self).__init__(in_channels=in_channels, out_channels=out_channels, stride=stride,
                                            bottleneck_channels=bottleneck_channels, sub_layers=sub_layers,
@@ -164,6 +186,8 @@ class SuperResK7K7(SuperResKXKX):
 
 
 def register_netblocks_dict(netblocks_dict: dict):
+    """add different kernel size block to block dict"""
+
     this_py_file_netblocks_dict = {
         'SuperResK3K3': SuperResK3K3,
         'SuperResK5K5': SuperResK5K5,

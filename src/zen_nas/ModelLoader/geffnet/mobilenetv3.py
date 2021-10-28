@@ -6,6 +6,7 @@ Paper: Searching for MobileNetV3 - https://arxiv.org/abs/1905.02244
 
 Hacked together by / Copyright 2020 Ross Wightman
 """
+
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -84,6 +85,7 @@ class MobileNetV3(nn.Module):
                 initialize_weight_default(m)
 
     def as_sequential(self):
+        """pack layers as sequential"""
         layers = [self.conv_stem, self.bn1, self.act1]
         layers.extend(self.blocks)
         layers.extend([
@@ -92,6 +94,7 @@ class MobileNetV3(nn.Module):
         return nn.Sequential(*layers)
 
     def features(self, x):
+        """compute feature map"""
         x = self.conv_stem(x)
         x = self.bn1(x)
         x = self.act1(x)
@@ -102,6 +105,7 @@ class MobileNetV3(nn.Module):
         return x
 
     def forward(self, x):
+        """forward"""
         x = self.features(x)
         x = x.flatten(1)
         if self.drop_rate > 0.:
@@ -110,6 +114,7 @@ class MobileNetV3(nn.Module):
 
 
 def _create_model(model_kwargs, variant, pretrained=False):
+    """use model_kwargs to create model"""
     as_sequential = model_kwargs.pop('as_sequential', False)
     model = MobileNetV3(**model_kwargs)
     if pretrained and model_urls[variant]:

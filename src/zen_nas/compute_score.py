@@ -1,3 +1,8 @@
+# Copyright 2019 ZTE corporation. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+"""compute model score"""
+
 import os, sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -7,6 +12,7 @@ from evolution_search import compute_nas_score
 
 
 def parse_cmd_options(argv):
+    """parse command line"""
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', type=int, default=0)
     parser.add_argument('--zero_shot_score', type=str, default='Zen',

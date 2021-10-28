@@ -16,6 +16,7 @@ import global_utils, argparse, ModelLoader, time
 
 
 def network_weight_gaussian_init(net: nn.Module):
+    """gaussian initialization"""
     with torch.no_grad():
         for m in net.modules():
             if isinstance(m, nn.Conv2d):
@@ -36,11 +37,13 @@ def network_weight_gaussian_init(net: nn.Module):
 
 
 def logdet(K):
+    """get the natural log of the absolute value of the determinant"""
     s, ld = np.linalg.slogdet(K)
     return ld
 
 
 def get_batch_jacobian(net, x):
+    """get jacobian and net's output"""
     net.zero_grad()
     x.requires_grad_(True)
     y = net(x)
@@ -51,6 +54,7 @@ def get_batch_jacobian(net, x):
 
 
 def compute_nas_score(gpu, model, resolution, batch_size):
+    """compute NASWOT score"""
     if gpu is not None:
         torch.cuda.set_device(gpu)
         model = model.cuda(gpu)
@@ -98,6 +102,7 @@ def compute_nas_score(gpu, model, resolution, batch_size):
 
 
 def parse_cmd_options(argv):
+    """parse command line"""
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, default=16, help='number of instances in one mini-batch.')
     parser.add_argument('--input_image_size', type=int, default=None,

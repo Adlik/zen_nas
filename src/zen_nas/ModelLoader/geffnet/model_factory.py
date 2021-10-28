@@ -1,3 +1,5 @@
+"""model factory"""
+
 from .config import set_layer_config
 from .helpers import load_checkpoint
 
@@ -12,7 +14,16 @@ def create_model(
         in_chans=3,
         checkpoint_path='',
         **kwargs):
+    """ create a model based on model name
 
+        :param model_name (str): model name
+        :param pretrained (bool): pretrained model
+        :param num_classes (int): class number
+        :param in_chans (int): input channels
+        :param checkpoint_path (str): checkpoint file path
+        :return model
+    """
+    
     model_kwargs = dict(num_classes=num_classes, in_chans=in_chans, pretrained=pretrained, **kwargs)
 
     if model_name in globals():

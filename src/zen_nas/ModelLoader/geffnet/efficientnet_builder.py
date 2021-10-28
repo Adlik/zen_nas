@@ -28,10 +28,12 @@ _BN_ARGS_TF = dict(momentum=BN_MOMENTUM_TF_DEFAULT, eps=BN_EPS_TF_DEFAULT)
 
 
 def get_bn_args_tf():
+    """get tensorflow bn args"""
     return _BN_ARGS_TF.copy()
 
 
 def resolve_bn_args(kwargs):
+    """resolve bn args"""
     bn_args = get_bn_args_tf() if kwargs.pop('bn_tf', False) else {}
     bn_momentum = kwargs.pop('bn_momentum', None)
     if bn_momentum is not None:
@@ -50,6 +52,7 @@ _SE_ARGS_DEFAULT = dict(
 
 
 def resolve_se_args(kwargs, in_chs, act_layer=None):
+    """resolve squeeze and excitation args"""
     se_kwargs = kwargs.copy() if kwargs is not None else {}
     # fill in args that aren't specified with the defaults
     for k, v in _SE_ARGS_DEFAULT.items():
@@ -65,6 +68,7 @@ def resolve_se_args(kwargs, in_chs, act_layer=None):
 
 
 def resolve_act_layer(kwargs, default='relu'):
+    """resolve activation layer"""
     act_layer = kwargs.pop('act_layer', default)
     if isinstance(act_layer, str):
         act_layer = get_act_layer(act_layer)
@@ -72,6 +76,7 @@ def resolve_act_layer(kwargs, default='relu'):
 
 
 def make_divisible(v: int, divisor: int = 8, min_value: int = None):
+    """make number be multiple of divisor"""
     min_value = min_value or divisor
     new_v = max(min_value, int(v + divisor / 2) // divisor * divisor)
     if new_v < 0.9 * v:  # ensure round down does not go down by more than 10%.
@@ -101,6 +106,7 @@ def drop_connect(inputs, training: bool = False, drop_connect_rate: float = 0.):
 
 
 class SqueezeExcite(nn.Module):
+    """Squeeze and Excitation module"""
 
     def __init__(self, in_chs, se_ratio=0.25, reduced_base_chs=None, act_layer=nn.ReLU, gate_fn=sigmoid, divisor=1):
         super(SqueezeExcite, self).__init__()
@@ -111,6 +117,7 @@ class SqueezeExcite(nn.Module):
         self.gate_fn = gate_fn
 
     def forward(self, x):
+        """forward"""
         x_se = x.mean((2, 3), keepdim=True)
         x_se = self.conv_reduce(x_se)
         x_se = self.act1(x_se)
@@ -120,6 +127,8 @@ class SqueezeExcite(nn.Module):
 
 
 class ConvBnAct(nn.Module):
+    """Conv + BN + act_layer"""
+
     def __init__(self, in_chs, out_chs, kernel_size,
                  stride=1, pad_type='', act_layer=nn.ReLU, norm_layer=nn.BatchNorm2d, norm_kwargs=None):
         super(ConvBnAct, self).__init__()
@@ -130,6 +139,7 @@ class ConvBnAct(nn.Module):
         self.act1 = act_layer(inplace=True)
 
     def forward(self, x):
+        """forward"""
         x = self.conv(x)
         x = self.bn1(x)
         x = self.act1(x)
@@ -168,6 +178,7 @@ class DepthwiseSeparableConv(nn.Module):
         self.act2 = act_layer(inplace=True) if pw_act else nn.Identity()
 
     def forward(self, x):
+        """forward"""
         residual = x
 
         x = self.conv_dw(x)
@@ -225,6 +236,7 @@ class InvertedResidual(nn.Module):
         self.bn3 = norm_layer(out_chs, **norm_kwargs)
 
     def forward(self, x):
+        """forward"""
         residual = x
 
         # Point-wise expansion
@@ -273,6 +285,7 @@ class CondConvResidual(InvertedResidual):
         self.routing_fn = nn.Linear(in_chs, self.num_experts)
 
     def forward(self, x):
+        """forward"""
         residual = x
 
         # CondConv routing
@@ -332,6 +345,7 @@ class EdgeResidual(nn.Module):
         self.bn2 = nn.BatchNorm2d(out_chs, **norm_kwargs)
 
     def forward(self, x):
+        """forward"""
         residual = x
 
         # Expansion convolution
@@ -383,9 +397,11 @@ class EfficientNetBuilder:
         self.block_count = 0
 
     def _round_channels(self, chs):
+        """round channels"""
         return round_channels(chs, self.channel_multiplier, self.channel_divisor, self.channel_min)
 
     def _make_block(self, ba):
+        """make block"""
         bt = ba.pop('block_type')
         ba['in_chs'] = self.in_chs
         ba['out_chs'] = self._round_channels(ba['out_chs'])
@@ -421,6 +437,7 @@ class EfficientNetBuilder:
         return block
 
     def _make_stack(self, stack_args):
+        """make one stage containing a list of block"""
         blocks = []
         # each stack (stage) contains a list of block arguments
         for i, ba in enumerate(stack_args):
@@ -454,6 +471,7 @@ class EfficientNetBuilder:
 
 
 def _parse_ksize(ss):
+    """parse kernel size"""
     if ss.isdigit():
         return int(ss)
     else:
@@ -618,6 +636,7 @@ def _scale_stage_depth(stack_args, repeats, depth_multiplier=1.0, depth_trunc='c
 
 
 def decode_arch_def(arch_def, depth_multiplier=1.0, depth_trunc='ceil', experts_multiplier=1, fix_first_last=False):
+    """decode defined architecture string"""
     arch_args = []
     for stack_idx, block_strings in enumerate(arch_def):
         assert isinstance(block_strings, list)
@@ -638,8 +657,11 @@ def decode_arch_def(arch_def, depth_multiplier=1.0, depth_trunc='ceil', experts_
 
 
 def initialize_weight_goog(m, n='', fix_group_fanout=True):
-    # weight init as per Tensorflow Official impl
-    # https://github.com/tensorflow/tpu/blob/master/models/official/mnasnet/mnasnet_model.py
+    """
+      weight init as per Tensorflow Official impl
+      https://github.com/tensorflow/tpu/blob/master/models/official/mnasnet/mnasnet_model.py
+    """
+    
     if isinstance(m, CondConv2d):
         fan_out = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
         if fix_group_fanout:
@@ -670,6 +692,7 @@ def initialize_weight_goog(m, n='', fix_group_fanout=True):
 
 
 def initialize_weight_default(m, n=''):
+    """default initialize weight"""
     if isinstance(m, CondConv2d):
         init_fn = get_condconv_initializer(partial(
             nn.init.kaiming_normal_, mode='fan_out', nonlinearity='relu'), m.num_experts, m.weight_shape)

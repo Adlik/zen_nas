@@ -5,6 +5,7 @@ This file is modified from:
 https://pytorch.org/vision/0.8/_modules/torchvision/models/resnet.html
 '''
 
+"""define different size resnet"""
 
 import argparse
 
@@ -46,6 +47,7 @@ def conv1x1(in_planes, out_planes, stride=1):
 
 
 class BasicBlock(nn.Module):
+    """resnet basicblock definition"""
     expansion = 1
     __constants__ = ['downsample']
 
@@ -69,6 +71,7 @@ class BasicBlock(nn.Module):
         self.stride = stride
 
     def forward(self, x):
+        """basicblock forward"""
         identity = x
 
         out = self.conv1(x)
@@ -89,6 +92,7 @@ class BasicBlock(nn.Module):
 
 
 class Bottleneck(nn.Module):
+    """resnet bottleneck definition"""
     expansion = 4
     __constants__ = ['downsample']
 
@@ -112,6 +116,7 @@ class Bottleneck(nn.Module):
         self.stride = stride
 
     def forward(self, x):
+        """bottleneck forward"""
         identity = x
 
         out = self.conv1(x)
@@ -136,13 +141,16 @@ class Bottleneck(nn.Module):
 
 
 def parse_cmd_options(argv):
+    """parse command line"""
     parser = argparse.ArgumentParser()
     parser.add_argument('--no_reslink', action='store_true')
     parser.add_argument('--dropout_rate', type=float, default=None)
     module_opt, _ = parser.parse_known_args(argv)
     return module_opt
 
+
 class ResNet(nn.Module):
+    """ResNet definition"""
 
     def __init__(self, block, layers, num_classes=1000, zero_init_residual=True,
                  groups=1, width_per_group=64, replace_stride_with_dilation=None,
@@ -231,6 +239,7 @@ class ResNet(nn.Module):
                     nn.init.constant_(m.bn2.weight, 0)
 
     def _make_layer(self, block, planes, blocks, stride=1, dilate=False, no_reslink=False):
+        """make network stages"""
         norm_layer = self._norm_layer
         downsample = None
         previous_dilation = self.dilation
@@ -258,6 +267,7 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward_pre_GAP(self, x):
+        """forward before global average pool layer"""
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -290,6 +300,7 @@ class ResNet(nn.Module):
         return x
 
     def _forward(self, x):
+        """resnet forward"""
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -329,6 +340,13 @@ class ResNet(nn.Module):
     forward = _forward
 
     def extract_stage_features_and_logit(self, x, target_downsample_ratio=16):
+        """extract stage according to downsample ratio
+
+            :param x: network input
+            :param target_downsample_ratio (int): target downsample ratio
+            :return stage_features, logit
+        """
+
         stage_features_list = []
         image_size = x.shape[2]
 
@@ -401,6 +419,7 @@ class ResNet(nn.Module):
 
 
 def _resnet(arch, block, layers, pretrained, progress, **kwargs):
+    """create different resnet """
     model = ResNet(block, layers, **kwargs)
     # if pretrained:
     #     state_dict = load_state_dict_from_url(model_urls[arch],

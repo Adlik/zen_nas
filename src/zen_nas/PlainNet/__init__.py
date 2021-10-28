@@ -12,6 +12,8 @@ from torch import nn
 _all_netblocks_dict_ = {}
 
 def parse_cmd_options(argv, opt=None):
+    """command line parameters"""
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--plainnet_struct', type=str, default=None, help='PlainNet structure string')
     parser.add_argument('--plainnet_struct_txt', type=str, default=None, help='PlainNet structure file name')
@@ -20,7 +22,10 @@ def parse_cmd_options(argv, opt=None):
 
     return module_opt
 
+
 def _get_right_parentheses_index_(s):
+    """get the position of the first right parenthese in string"""
+
     # assert s[0] == '('
     left_paren_count = 0
     for index, x in enumerate(s):
@@ -35,7 +40,10 @@ def _get_right_parentheses_index_(s):
             pass
     return None
 
+
 def pretty_format(plainnet_str, indent=2):
+    """reformat the original network string"""
+
     the_formated_str = ''
     indent_str = ''
     if indent >= 1:
@@ -146,7 +154,10 @@ def pretty_format(plainnet_str, indent=2):
 
     return the_formated_str
 
+
 def _create_netblock_list_from_str_(s, no_create=False, **kwargs):
+    """construct the list of block instances from string"""
+
     block_list = []
     while len(s) > 0:
         is_found_block_class = False
@@ -168,12 +179,18 @@ def _create_netblock_list_from_str_(s, no_create=False, **kwargs):
     pass  # end while
     return block_list, ''
 
+
 def create_netblock_list_from_str(s, no_create=False, **kwargs):
+    """return the list of block instance"""
+
     the_list, remaining_s = _create_netblock_list_from_str_(s, no_create=no_create, **kwargs)
     assert len(remaining_s) == 0
     return the_list
 
+
 def add_SE_block(structure_str: str):
+    """add se_block string to network string"""
+
     new_str = ''
     RELU = 'RELU'
     offset = 4
@@ -192,7 +209,10 @@ def add_SE_block(structure_str: str):
     new_str += structure_str
     return new_str
 
+
 class PlainNet(nn.Module):
+    """model base class"""
+
     def __init__(self, argv=None, opt=None, num_classes=None, plainnet_struct=None, no_create=False,
                  **kwargs):
         super(PlainNet, self).__init__()
@@ -235,6 +255,8 @@ class PlainNet(nn.Module):
             self.module_list = nn.ModuleList(block_list)  # register
 
     def forward(self, x):
+        """forward"""
+
         output = x
         for the_block in self.block_list:
             output = the_block(output)
@@ -250,6 +272,8 @@ class PlainNet(nn.Module):
         return str(self)
 
     def get_FLOPs(self, input_resolution):
+        """model FLOPs"""
+
         the_res = input_resolution
         the_flops = 0
         for the_block in self.block_list:
@@ -259,6 +283,8 @@ class PlainNet(nn.Module):
         return the_flops
 
     def get_model_size(self):
+        """model parameters"""
+
         the_size = 0
         for the_block in self.block_list:
             the_size += the_block.get_model_size()
@@ -266,6 +292,8 @@ class PlainNet(nn.Module):
         return the_size
 
     def replace_block(self, block_id, new_block):
+        """replace block_list[block_id] with new_block"""
+
         self.block_list[block_id] = new_block
         if block_id < len(self.block_list):
             self.block_list[block_id + 1].set_in_channels(new_block.out_channels)

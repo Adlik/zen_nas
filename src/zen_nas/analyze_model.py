@@ -2,6 +2,8 @@
 Copyright (C) 2010-2021 Alibaba Group Holding Limited.
 '''
 
+"""get model FLOPs and parameters"""
+
 import os, sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -13,6 +15,7 @@ import ZenNet
 
 
 def main(opt, argv):
+    """get model flops and parameters"""
     model = ModelLoader.get_model(opt, argv)
     flops, params = get_model_complexity_info(model, (3, opt.input_image_size, opt.input_image_size),
                                               as_strings=False,
@@ -22,6 +25,7 @@ def main(opt, argv):
 
 
 def get_flops_params(opt):
+    """get model flops and parameters"""
     model = ZenNet.get_ZenNet(opt.arch)
     flops, params = get_model_complexity_info(model, (3, opt.input_image_size, opt.input_image_size),
                                               as_strings=False,

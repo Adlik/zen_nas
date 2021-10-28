@@ -1,6 +1,8 @@
 # Copyright 2019 ZTE corporation. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.
 
+"""Support single GPU, horovod, apex with mixed precision distributed training, teacher distillation"""
+
 import os, sys, copy, time, logging, argparse
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -38,7 +40,7 @@ import global_utils
 
 
 def get_logger(log_filename=None, level=logging.INFO):
-    
+    """get log object, support distributed training """
     logger = logging.getLogger()
     if log_filename is not None:
         distutils.dir_util.mkpath(os.path.dirname(log_filename))
@@ -51,10 +53,15 @@ def get_logger(log_filename=None, level=logging.INFO):
     logger.setLevel(level)
     return logger
 
+
 def ts_feature_map_loss(x,y):
+    """compute smooth L1 loss"""
     return torch.nn.functional.smooth_l1_loss(x, y)
 
+
 class TeacherStudentDistillNet(nn.Module):
+    """warp teacher and student model, implement the distillation process"""
+
     def __init__(self, teacher_model: nn.Module, student_model: nn.Module, opt, argv, target_downsample_ratio=None):
         super(TeacherStudentDistillNet, self).__init__()
         self.opt = opt
@@ -115,16 +122,19 @@ class TeacherStudentDistillNet(nn.Module):
                     layer.eps = 1e-3
 
     def train(self, mode=True):
+        """set to train mode"""
         self.training = True
         self.student_model.train(mode)
         self.teacher_model.eval()
 
     def eval(self):
+        """set to eval mode"""
         self.training = False
         self.student_model.eval()
         self.teacher_model.eval()
 
     def forward(self, x):
+        """obtain the stage features of the student and teacher and the logit of the student"""
         if self.training:
             if x.shape[2] != self.opt.teacher_input_image_size:
                 teacher_x = F.interpolate(x, self.opt.teacher_input_image_size, mode='bilinear')
@@ -143,6 +153,7 @@ class TeacherStudentDistillNet(nn.Module):
         return self.student_logit
 
     def compute_ts_distill_loss(self):
+        """compute feature loss and logit loss"""
         feature_loss = 0.0
         for tf, sf, proj_conv in zip(self.teacher_stage_features_list, self.student_stage_features_list, self.proj_conv_list):
             if self.opt.ts_clip is not None:
@@ -166,6 +177,7 @@ class TeacherStudentDistillNet(nn.Module):
         return feature_loss, logit_loss
 
     def init_parameters(self):
+        """initialize student model and projection function"""
         for block in self.proj_conv_list:
             network_weight_zero_init(block)
         if hasattr(self.student_model, 'init_parameters'):
@@ -175,6 +187,7 @@ class TeacherStudentDistillNet(nn.Module):
 
 
 def save_checkpoint(checkpoint_filename, state_dict):
+    """save model state_dict"""
     save_dir = os.path.dirname(checkpoint_filename)
     base_filename = os.path.basename(checkpoint_filename)
     backup_filename = os.path.join(save_dir, base_filename + '.backup')
@@ -270,8 +283,9 @@ def split_weights(net):
 
     return [dict(params=decay), dict(params=no_decay, weight_decay=0)]
 
+
 def network_weight_MSRAPrelu_init(net: nn.Module):
-    # the gain of xavier_normal_ is computed from gain=magnitude * sqrt(3) where magnitude is 2/(1+0.25**2). [mxnet implementation]
+    """the gain of xavier_normal_ is computed from gain=magnitude * sqrt(3) where magnitude is 2/(1+0.25**2). [mxnet implementation]"""
 
     for m in net.modules():
         if isinstance(m, nn.Conv2d):
@@ -292,6 +306,7 @@ def network_weight_MSRAPrelu_init(net: nn.Module):
 
 
 def network_weight_xavier_init(net: nn.Module):
+    """the gain of xavier_normal_ is gotten by nn.init.calculate_gain('relu)"""
     for m in net.modules():
         if isinstance(m, nn.Conv2d):
             nn.init.xavier_normal_(m.weight.data, gain=nn.init.calculate_gain('relu'))
@@ -309,7 +324,9 @@ def network_weight_xavier_init(net: nn.Module):
 
     return net
 
+
 def network_weight_stupid_init(net: nn.Module):
+    """initialize tensor with torch.randn """
     with torch.no_grad():
         for m in net.modules():
             if isinstance(m, nn.Conv2d):
@@ -334,6 +351,7 @@ def network_weight_stupid_init(net: nn.Module):
 
 
 def network_weight_zero_init(net: nn.Module):
+    """initialize tensor with torch.randn and scale by 1e-4 """
     with torch.no_grad():
         for m in net.modules():
             if isinstance(m, nn.Conv2d):
@@ -356,7 +374,9 @@ def network_weight_zero_init(net: nn.Module):
 
     return net
 
+
 def network_weight_01_init(net: nn.Module):
+    """initialize tensor with torch.randn and scale by 0.1"""
     with torch.no_grad():
         for m in net.modules():
             if isinstance(m, nn.Conv2d):
@@ -379,7 +399,9 @@ def network_weight_01_init(net: nn.Module):
 
     return net
 
+
 def mixup(input, target, alpha=0.2):
+    """Returns mixed inputs and target"""
     gamma = np.random.beta(alpha, alpha)
     # target is onehot format!
     perm = torch.randperm(input.size(0))
@@ -389,6 +411,7 @@ def mixup(input, target, alpha=0.2):
 
 
 def one_hot(y, num_classes, smoothing_eps=None):
+    """use smoothing_eps to smooth y"""
     if smoothing_eps is None:
         one_hot_y = F.one_hot(y, num_classes).float()
         return one_hot_y
@@ -401,6 +424,7 @@ def one_hot(y, num_classes, smoothing_eps=None):
 
 
 def cross_entropy(logit, target):
+    """"compute cross entropy loss"""
     # target must be one-hot format!!
     prob_logit = F.log_softmax(logit, dim=1)
     loss = -(target * prob_logit).sum(dim=1).mean()
@@ -408,6 +432,7 @@ def cross_entropy(logit, target):
 
 
 def config_dist_env_and_opt(opt):
+    """initialize for different training strategies"""
     opt = copy.copy(opt)
 
     # set world_size, gpu, global rank
@@ -458,7 +483,9 @@ def config_dist_env_and_opt(opt):
 
     return opt
 
+
 def init_model(model, opt, argv):
+    """select the network initialization method"""
     if hasattr(opt, 'weight_init') and opt.weight_init == 'xavier':
         network_weight_xavier_init(model)
     elif hasattr(opt, 'weight_init') and opt.weight_init == 'MSRAPrelu':
@@ -493,6 +520,7 @@ def init_model(model, opt, argv):
 
 
 def get_optimizer(model, opt):
+    """configure model optimizer"""
     params = split_weights(model)
     if opt.optimizer == 'sgd':
         optimizer = torch.optim.SGD(params,
@@ -517,7 +545,14 @@ def get_optimizer(model, opt):
 
     return optimizer
 
+
 def load_model(model, load_parameters_from, strict_load=False, map_location='cpu'):
+    """load model state dict from load_parameters_from
+
+        :param model: model
+        :param load_parameters_from: checkpoint file
+        :return: model
+    """
     logger.info('loading params from ' + load_parameters_from)
     checkpoint = torch.load(load_parameters_from, map_location=map_location)
     if 'state_dict' in checkpoint:
@@ -530,7 +565,15 @@ def load_model(model, load_parameters_from, strict_load=False, map_location='cpu
 
     return model
 
+
 def resume_checkpoint(model, optimizer, checkpoint_filename, opt, map_location='cpu'):
+    """restore the model and optimizer
+
+        :param: model: model
+        :param: optimizer: optimizer
+        :param: checkpoint_filename: checkpoint file
+        :return model, optimizer
+    """
     logger.info('resuming from ' + checkpoint_filename)
     checkpoint = torch.load(checkpoint_filename, map_location=map_location)
     assert 'state_dict' in checkpoint
@@ -547,7 +590,9 @@ def resume_checkpoint(model, optimizer, checkpoint_filename, opt, map_location='
 
     return model, optimizer, training_status_info, opt
 
+
 def config_model_optimizer_hvd_and_apex(model, optimizer, opt):
+    """configure horovod and apex"""
     if opt.dist_mode == 'horovod' and not opt.independent_training:
         # Horovod: (optional) compression algorithm.
         compression = hvd.Compression.fp16 if opt.fp16_allreduce else hvd.Compression.none
@@ -568,7 +613,20 @@ def config_model_optimizer_hvd_and_apex(model, optimizer, opt):
 
     return model, optimizer
 
+
 def train_one_epoch(train_loader, model, criterion, optimizer, epoch, opt, num_train_samples, no_acc_eval=False):
+    """ model training
+
+        :param train_loader: train dataset loader
+        :param model: model
+        :param criterion: loss criterion
+        :param optimizer: 
+        :param epoch: current epoch
+        :param num_train_samples: total number of samples in train_loader
+        :param no_acc_eval (bool): accuray eval in model training
+        :return:
+    """
+
     info = {}
 
     losses = AverageMeter('Loss ', ':6.4g')
@@ -735,6 +793,14 @@ def train_one_epoch(train_loader, model, criterion, optimizer, epoch, opt, num_t
 
 
 def validate(val_loader, model, criterion, opt, epoch='N/A'):
+    """ model evaluation 
+
+        :param val_loader: validate dataset loader
+        :param model: model
+        :param criterion: loss criterion
+        :return: 
+    """
+
     losses = AverageMeter('Loss ', ':6.4g')
     top1 = AverageMeter('Acc@1 ', ':6.2f')
     top5 = AverageMeter('Acc@5 ', ':6.2f')
@@ -810,6 +876,23 @@ def validate(val_loader, model, criterion, opt, epoch='N/A'):
 
 def train_all_epochs(opt, model, optimizer, train_sampler, train_loader, criterion, val_loader, num_train_samples=None,
                      no_acc_eval=False, save_all_ranks=False, training_status_info=None, save_params=True, writer=None):
+    """model training and evaluation, and saving best and latest model
+        :param opt: training and evaluation configure
+        :param model: model
+        :param optimizer: optimizer
+        :param train_sampler: train dataset sampler
+        :param train_loader: train dataset loader
+        :param criterion: loss criterion
+        :param val_loader: val dataset loader
+        :param no_acc_eval (bool): accuray eval in model training
+        :param num_train_samples: total number of samples in train_loader
+        :param save_all_ranks (bool): default False
+        :param training_status_info (dict): record training status
+        :param save_params (bool): save model parameters
+        :param writer: tensorboard
+        :return:
+    """
+
     timer_start = time.time()
 
     if training_status_info is None:
@@ -923,6 +1006,14 @@ def train_all_epochs(opt, model, optimizer, train_sampler, train_loader, criteri
 
 
 def main(opt, argv):
+    """Train and test
+
+        :param argv: sys.argv
+        :param logger: logging.getLogger 
+        :param writer: tensorboard
+        :return:
+    """
+
     assert opt.save_dir is not None
 
     job_done_fn = os.path.join(opt.save_dir, 'train_image_classification.done')

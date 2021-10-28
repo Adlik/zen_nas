@@ -1,3 +1,8 @@
+# Copyright 2019 ZTE corporation. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.
+
+"""generate random network and mutated network"""
+
 import os, sys
 import numpy as np
 import random
@@ -7,22 +12,25 @@ import global_utils
 import PlainNet
 from PlainNet import basic_blocks, super_blocks, SuperResKXKX, SuperResK1KXK1, SuperResIDWEXKX
 
-
 search_space = [SuperResKXKX, SuperResK1KXK1]
 
 
 def get_block_from_module(module, d:dict):
+    """collect all optional block from module"""
     assert hasattr(module, 'register_netblocks_dict')
     d = module.register_netblocks_dict(d)
     return d
 
+
 def register_serach_space(candidate_blocks):
+    """register search space"""
     global search_space
     search_space.clear()
     search_space = candidate_blocks.copy()
 
 
 def get_random_block():
+    """get random block from serach space"""
     search_space_block_dict = {}
     global search_space
     for m in search_space:
@@ -33,6 +41,7 @@ def get_random_block():
 
 
 def get_random_channels_ratio(range : list=None):
+    """determin mutated channel ratio"""
     if range is not None:
         assert len(range) == 2, 'need two number to limit to choose number in ranges'
         range.sort()
@@ -42,22 +51,26 @@ def get_random_channels_ratio(range : list=None):
 
 
 def get_random_sublayers_change():
+    """determin mutated sublayer """
     candidate = [-2, -1, 0, 1, 2]
     return np.random.choice(candidate)
 
 
 def verify_channels(channel, ratio):
+    """restrict range"""
     channel *= ratio
     new_channel = global_utils.smart_round(channel, base=8)
     return min(new_channel, 2048)
 
 
 def verify_sublayers(sublayers, change:int):
+    """restrict range"""
     sublayers += change
     return max(1, sublayers)
 
 
 def mutated_block(block_list:list, block_id:int):
+    """construct mutated block objec"""
     chosen_block = block_list[block_id]
     in_channel = chosen_block.in_channels
     out_channel = chosen_block.out_channels
@@ -83,6 +96,7 @@ def mutated_block(block_list:list, block_id:int):
 
 
 def get_mutated_structure_str(AnyPlainNet, structure_str, num_classes, num_replaces=1):
+    """generate mutated network string"""
     the_net = AnyPlainNet(num_classes=num_classes, plainnet_struct=structure_str, no_create=True)
     assert isinstance(the_net, PlainNet.PlainNet)
     selected_random_id_set = set()
@@ -104,6 +118,7 @@ def get_mutated_structure_str(AnyPlainNet, structure_str, num_classes, num_repla
 
 
 def get_random_initialized_structure_str():
+    """generate random network from serach space"""
     s = ""
     input_channel = 3
     out_channel = 32

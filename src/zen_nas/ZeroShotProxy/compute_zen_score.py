@@ -2,6 +2,7 @@
 Copyright (C) 2010-2021 Alibaba Group Holding Limited.
 '''
 
+"""compute network zen score"""
 
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -12,6 +13,7 @@ import global_utils, argparse, ModelLoader, time
 
 
 def network_weight_gaussian_init(net: nn.Module):
+    """gaussian initialization"""
     with torch.no_grad():
         for m in net.modules():
             if isinstance(m, nn.Conv2d):
@@ -32,6 +34,18 @@ def network_weight_gaussian_init(net: nn.Module):
 
 
 def compute_nas_score(gpu, model, mixup_gamma, resolution, batch_size, repeat, fp16=False):
+    """compute zen score
+
+        :param gpu (int): gpu index
+        :param model: model
+        :param mixup_gamma (double): mixing coefficient
+        :param resolution (int): input image resolution
+        :param batch_size (int): batch size
+        :param repeat (int): repeat time
+        :oaram fp16 (bool): whether using half precision
+        :return dict(score)
+    """
+
     info = {}
     nas_score_list = []
     if gpu is not None:
@@ -79,6 +93,7 @@ def compute_nas_score(gpu, model, mixup_gamma, resolution, batch_size, repeat, f
 
 
 def parse_cmd_options(argv):
+    """parse command line"""
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, default=16, help='number of instances in one mini-batch.')
     parser.add_argument('--input_image_size', type=int, default=None,

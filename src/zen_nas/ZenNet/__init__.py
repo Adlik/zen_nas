@@ -2,6 +2,7 @@
 Copyright (C) 2010-2021 Alibaba Group Holding Limited.
 '''
 
+"""Provide existing models and training weights""""
 
 import os, sys
 this_script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -166,6 +167,12 @@ zennet_model_zoo = {
 
 
 def get_ZenNet(model_name, pretrained=False):
+    """ get model from model_zoo
+
+        :param model_name (str): model name
+        :return model
+    """
+
     if model_name not in zennet_model_zoo:
         print('Error! Cannot find ZenNet model name! Please choose one in the following list:')
 

@@ -29,6 +29,7 @@ import numpy as np
 
 
 def network_weight_gaussian_init(net: nn.Module):
+    """gaussian initialization"""
     with torch.no_grad():
         for m in net.modules():
             if isinstance(m, nn.Conv2d):
@@ -49,6 +50,7 @@ def network_weight_gaussian_init(net: nn.Module):
 
 
 def get_layer_metric_array(net, metric, mode):
+    """layer metric array"""
     metric_array = []
 
     for layer in net.modules():
@@ -61,6 +63,7 @@ def get_layer_metric_array(net, metric, mode):
 
 
 def compute_synflow_per_weight(net, inputs, mode):
+    """compute synflow for each weight"""
     device = inputs.device
 
     # convert params to their abs. Keep sign for converting it back.
@@ -106,6 +109,7 @@ def compute_synflow_per_weight(net, inputs, mode):
 
 
 def do_compute_nas_score(gpu, model, resolution, batch_size):
+    """compute syncflow score"""
     model.train()
     model.requires_grad_(True)
 

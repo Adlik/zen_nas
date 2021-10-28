@@ -2,6 +2,8 @@
 Copyright (C) 2010-2021 Alibaba Group Holding Limited.
 '''
 
+"""process images andload imagenet and cifar"""
+
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -62,6 +64,7 @@ params_dict = {
 
 
 def fast_collate(batch, memory_format):
+    """conver array to tensor"""
     imgs = [img[0] for img in batch]
     targets = torch.tensor([target[1] for target in batch], dtype=torch.int64)
     # print('image size: ',imgs[0].size())
@@ -102,6 +105,26 @@ def load_imagenet_like(dataset_name, set_name, train_augment, random_erase, auto
                        data_dir, input_image_size, input_image_crop, rank, world_size,
                        shuffle, batch_size, num_workers, drop_last, dataset_ImageFolderClass,
                        dataloader_testing, channel_last=False):
+        """load imagenet dataset
+
+        :param dataset_name (str): dataset name
+        :param set_name (str): train or val
+        :param batch_size (int): batch size
+        :param train_augment (bool): data augmentation
+        :param random_erase (bool): random erase
+        :param auto_augment (bool): Auto Augmentation
+        :param input_image_size (int): input image size
+        :param input_image_crop (float): input image crop ratio
+        :param rank (int): rank
+        :param world_size (int): number of GPUs
+        :param shuffle (bool): shuffle
+        :param num_workers (int): the number of workers
+        :param drop_last (bool): drop last
+        :param dataset_ImageFolderClass: datasets.ImageFolder
+        :param dataloader_testing (bool): dataloader testing
+        :param channel_last (bool): channel_last or contiguous_format
+        :return data_loader, sampler
+    """
     resize_image_size = int(math.ceil(input_image_size / input_image_crop))
     transforms_normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
@@ -171,6 +194,25 @@ def load_cifar_like(dataset_name, set_name, train_augment, random_erase, auto_au
                        data_dir, input_image_size, input_image_crop, rank, world_size,
                        shuffle, batch_size, num_workers, drop_last, dataset_ImageFolderClass,
                     dataloader_testing=False):
+    """load cifar dataset
+
+        :param dataset_name (str): dataset name
+        :param set_name (str): train or val
+        :param batch_size (int): batch size
+        :param train_augment (bool): data augmentation
+        :param random_erase (bool): random erase
+        :param auto_augment (bool): Auto Augmentation
+        :param input_image_size (int): input image size
+        :param input_image_crop (float): input image crop ratio
+        :param rank (int): rank
+        :param world_size (int): number of GPUs
+        :param shuffle (bool): shuffle
+        :param num_workers (int): the number of workers
+        :param drop_last (bool): drop last
+        :param dataset_ImageFolderClass: datasets.ImageFolder
+        :param dataloader_testing (bool): dataloader testing
+        :return data_loader, sampler
+    """
 
     transforms_normalize = transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2023, 0.1994, 0.2010])
 
@@ -247,6 +289,27 @@ def load_cifar_like(dataset_name, set_name, train_augment, random_erase, auto_au
 def _get_data_(dataset_name=None, set_name=None, batch_size=None, train_augment=False, random_erase=False, auto_augment=False,
              input_image_size=224, input_image_crop=0.875, rank=0, world_size=1, shuffle=False,
              num_workers=6, drop_last=False, dataset_ImageFolderClass=None, dataloader_testing=False, argv=None, channel_last=False):
+    """get imagenet/cifar dataset
+
+        :param dataset_name (str): dataset name
+        :param set_name (str): train or val
+        :param batch_size (int): batch size
+        :param train_augment (bool): data augmentation
+        :param random_erase (bool): random erase
+        :param auto_augment (bool): Auto Augmentation
+        :param input_image_size (int): input image size
+        :param input_image_crop (float): input image crop ratio
+        :param rank (int): rank
+        :param world_size (int): number of GPUs
+        :param shuffle (bool): shuffle
+        :param num_workers (int): the number of workers
+        :param drop_last (bool): drop last
+        :param dataset_ImageFolderClass: datasets.ImageFolder
+        :param dataloader_testing (bool): dataloader testing
+        :param argv: sys.argv
+        :param channel_last (bool): channel_last or contiguous_format
+        :return data_loader, sampler
+    """
 
     if dataset_name in ['imagenet', 'myimagenet100']:
         dataset_params = params_dict[dataset_name]
@@ -283,6 +346,7 @@ def _get_data_(dataset_name=None, set_name=None, batch_size=None, train_augment=
 
 
 def get_data(opt, argv):
+    """ get train/val loader and sampler"""
     dataset_name = opt.dataset
     batch_size = opt.batch_size_per_gpu
     random_erase = opt.random_erase

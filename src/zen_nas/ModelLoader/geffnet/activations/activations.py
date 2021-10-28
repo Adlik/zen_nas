@@ -5,6 +5,7 @@ easily be swapped. All have an `inplace` arg even if not used.
 
 Copyright 2020 Ross Wightman
 """
+
 from torch import nn as nn
 from torch.nn import functional as F
 
@@ -19,11 +20,13 @@ def swish(x, inplace: bool = False):
 
 
 class Swish(nn.Module):
+    """Swish module"""
     def __init__(self, inplace: bool = False):
         super(Swish, self).__init__()
         self.inplace = inplace
 
     def forward(self, x):
+        """forward"""
         return swish(x, self.inplace)
 
 
@@ -34,57 +37,69 @@ def mish(x, inplace: bool = False):
 
 
 class Mish(nn.Module):
+    """Mish module"""
     def __init__(self, inplace: bool = False):
         super(Mish, self).__init__()
         self.inplace = inplace
 
     def forward(self, x):
+        """forward"""
         return mish(x, self.inplace)
 
 
 def sigmoid(x, inplace: bool = False):
+    """sigmoid function"""
     return x.sigmoid_() if inplace else x.sigmoid()
 
 
 # PyTorch has this, but not with a consistent inplace argmument interface
 class Sigmoid(nn.Module):
+    """sigmoid module"""
     def __init__(self, inplace: bool = False):
         super(Sigmoid, self).__init__()
         self.inplace = inplace
 
     def forward(self, x):
+        """forward"""
         return x.sigmoid_() if self.inplace else x.sigmoid()
 
 
 def tanh(x, inplace: bool = False):
+    """Tanh function"""
     return x.tanh_() if inplace else x.tanh()
 
 
 # PyTorch has this, but not with a consistent inplace argmument interface
 class Tanh(nn.Module):
+    """Tanh module"""
     def __init__(self, inplace: bool = False):
         super(Tanh, self).__init__()
         self.inplace = inplace
 
     def forward(self, x):
+        """forward"""
         return x.tanh_() if self.inplace else x.tanh()
 
 
 def hard_swish(x, inplace: bool = False):
+    """hard swish function"""
     inner = F.relu6(x + 3.).div_(6.)
     return x.mul_(inner) if inplace else x.mul(inner)
 
 
 class HardSwish(nn.Module):
+    """hard swish module"""
     def __init__(self, inplace: bool = False):
         super(HardSwish, self).__init__()
         self.inplace = inplace
 
     def forward(self, x):
+        """forward"""
         return hard_swish(x, self.inplace)
 
 
 def hard_sigmoid(x, inplace: bool = False):
+    """hard sigmoid function"""
     if inplace:
         return x.add_(3.).clamp_(0., 6.).div_(6.)
     else:
@@ -92,11 +107,13 @@ def hard_sigmoid(x, inplace: bool = False):
 
 
 class HardSigmoid(nn.Module):
+    """hard sigmoid module"""
     def __init__(self, inplace: bool = False):
         super(HardSigmoid, self).__init__()
         self.inplace = inplace
 
     def forward(self, x):
+        """forward"""
         return hard_sigmoid(x, self.inplace)
 
 

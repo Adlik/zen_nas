@@ -2,6 +2,7 @@
 Copyright (C) 2010-2021 Alibaba Group Holding Limited.
 '''
 
+"""define SuperResK1KXK1 class with different kernel size"""
 
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -15,6 +16,8 @@ import global_utils
 
 
 class SuperResK1KXK1(PlainNetSuperBlockClass):
+    """Resnet BottleneckBlock-like block"""
+
     def __init__(self, in_channels=None, out_channels=None, stride=None, bottleneck_channels=None ,sub_layers=None, kernel_size=None,
                  no_create=False, no_reslink=False, no_BN=False, use_se=False, **kwargs):
         super(SuperResK1KXK1, self).__init__(**kwargs)
@@ -111,9 +114,13 @@ class SuperResK1KXK1(PlainNetSuperBlockClass):
         )
 
     def encode_structure(self):
+        """pack channels and sub_layers to a list"""
+
         return [self.out_channels, self.sub_layers, self.bottleneck_channels]
 
     def split(self, split_layer_threshold):
+        """split the layer when exceeding threshold"""
+
         if self.sub_layers >= split_layer_threshold:
             new_sublayers_1 = split_layer_threshold // 2
             new_sublayers_2 = self.sub_layers - new_sublayers_1
@@ -127,6 +134,8 @@ class SuperResK1KXK1(PlainNetSuperBlockClass):
             return str(self)
 
     def structure_scale(self, scale=1.0, channel_scale=None, sub_layer_scale=None):
+        """ adjust the number to a specific multiple or range"""
+        
         if channel_scale is None:
             channel_scale = scale
         if sub_layer_scale is None:
@@ -142,6 +151,12 @@ class SuperResK1KXK1(PlainNetSuperBlockClass):
 
     @classmethod
     def create_from_str(cls, s, **kwargs):
+        """ class method
+
+            :param s (str): SuperRes block str
+            :return cls instance
+        """
+
         assert cls.is_instance_from_str(s)
         idx = _get_right_parentheses_index_(s)
         assert idx is not None
@@ -167,6 +182,8 @@ class SuperResK1KXK1(PlainNetSuperBlockClass):
 
 
 class SuperResK1K3K1(SuperResK1KXK1):
+    """ kernel size 3x3"""
+
     def __init__(self, in_channels=None, out_channels=None, stride=None, bottleneck_channels=None, sub_layers=None, no_create=False, **kwargs):
         super(SuperResK1K3K1, self).__init__(in_channels=in_channels, out_channels=out_channels, stride=stride,
                                            bottleneck_channels=bottleneck_channels, sub_layers=sub_layers,
@@ -174,6 +191,8 @@ class SuperResK1K3K1(SuperResK1KXK1):
                                            no_create=no_create, **kwargs)
 
 class SuperResK1K5K1(SuperResK1KXK1):
+    """ kernel size 5x5"""
+
     def __init__(self, in_channels=None, out_channels=None, stride=None, bottleneck_channels=None, sub_layers=None, no_create=False, **kwargs):
         super(SuperResK1K5K1, self).__init__(in_channels=in_channels, out_channels=out_channels, stride=stride,
                                            bottleneck_channels=bottleneck_channels, sub_layers=sub_layers,
@@ -182,6 +201,8 @@ class SuperResK1K5K1(SuperResK1KXK1):
 
 
 class SuperResK1K7K1(SuperResK1KXK1):
+    """ kernel size 7x7"""
+
     def __init__(self, in_channels=None, out_channels=None, stride=None, bottleneck_channels=None, sub_layers=None, no_create=False, **kwargs):
         super(SuperResK1K7K1, self).__init__(in_channels=in_channels, out_channels=out_channels, stride=stride,
                                            bottleneck_channels=bottleneck_channels, sub_layers=sub_layers,
@@ -190,6 +211,8 @@ class SuperResK1K7K1(SuperResK1KXK1):
 
 
 def register_netblocks_dict(netblocks_dict: dict):
+    """add different kernel size block to block dict"""
+    
     this_py_file_netblocks_dict = {
         'SuperResK1K3K1': SuperResK1K3K1,
         'SuperResK1K5K1': SuperResK1K5K1,

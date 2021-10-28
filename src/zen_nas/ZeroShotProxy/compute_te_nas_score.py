@@ -5,6 +5,7 @@ This file is modified from:
 https://github.com/VITA-Group/TENAS
 '''
 
+"""compute te nas score"""
 
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -28,6 +29,7 @@ class LinearRegionCount(object):
 
     @torch.no_grad()
     def update2D(self, activations):
+        """2D"""
         n_batch = activations.size()[0]
         n_neuron = activations.size()[1]
         self.n_neuron = n_neuron
@@ -40,6 +42,7 @@ class LinearRegionCount(object):
 
     @torch.no_grad()
     def calc_LR(self):
+        """calculate linear region"""
         res = torch.matmul(self.activations.half(), (1-self.activations).T.half())
         res += res.T
         res = 1 - torch.sign(res)
@@ -53,6 +56,7 @@ class LinearRegionCount(object):
 
     @torch.no_grad()
     def update1D(self, activationList):
+        """1D"""
         code_string = ''
         for key, value in activationList.items():
             n_neuron = value.size()[0]
@@ -65,12 +69,15 @@ class LinearRegionCount(object):
             self.ActPattern[code_string] = 1
 
     def getLinearReginCount(self):
+        """get linear regin count"""
         if self.n_LR == -1:
             self.calc_LR()
         return self.n_LR
 
 
 class Linear_Region_Collector:
+    """collect linear region"""
+
     def __init__(self, models=[], input_size=(64, 3, 32, 32), gpu=None,
                  sample_batch=1, dataset=None, data_path=None, seed=0):
         self.models = []
@@ -88,6 +95,7 @@ class Linear_Region_Collector:
         self.reinit(models, input_size, sample_batch, seed)
 
     def reinit(self, models=None, input_size=None, sample_batch=None, seed=None):
+        """reinitialize""""
         if models is not None:
             assert isinstance(models, list)
             del self.models
@@ -116,6 +124,7 @@ class Linear_Region_Collector:
             torch.cuda.empty_cache()
 
     def clear(self):
+        """clear data"""
         self.LRCounts = [LinearRegionCount(self.input_size[0]*self.sample_batch) for _ in range(len(self.models))]
         del self.interFeature
         self.interFeature = []
@@ -123,15 +132,18 @@ class Linear_Region_Collector:
             torch.cuda.empty_cache()
 
     def register_hook(self, model):
+        """register hook"""
         for m in model.modules():
             if isinstance(m, nn.ReLU):
                 m.register_forward_hook(hook=self.hook_in_forward)
 
     def hook_in_forward(self, module, input, output):
+        """hook function"""
         if isinstance(input, tuple) and len(input[0].size()) == 4:
             self.interFeature.append(output.detach())  # for ReLU
 
     def forward_batch_sample(self):
+        """batch forward"""
         for _ in range(self.sample_batch):
             # try:
             #     inputs, targets = self.loader.next()
@@ -146,6 +158,7 @@ class Linear_Region_Collector:
         return [LRCount.getLinearReginCount() for LRCount in self.LRCounts]
 
     def forward(self, model, LRCount, input_data):
+        """forward"""
         self.interFeature = []
         with torch.no_grad():
             # model.forward(input_data.cuda())
@@ -156,6 +169,7 @@ class Linear_Region_Collector:
 
 
 def compute_RN_score(model: nn.Module,  batch_size=None, image_size=None, num_batch=None, gpu=None):
+    """compute number of linear regions"""
     # # just debug
     # gpu = 0
     # import ModelLoader
@@ -172,6 +186,7 @@ def compute_RN_score(model: nn.Module,  batch_size=None, image_size=None, num_ba
 
 
 def recal_bn(network, xloader, recalbn, device):
+    """recompute bn"""
     for m in network.modules():
         if isinstance(m, torch.nn.BatchNorm2d):
             m.running_mean.data.fill_(0)
@@ -189,6 +204,7 @@ def recal_bn(network, xloader, recalbn, device):
 
 def get_ntk_n(networks, recalbn=0, train_mode=False, num_batch=None,
               batch_size=None, image_size=None, gpu=None):
+    """get ntk"""
     if gpu is not None:
         device = torch.device('cuda:{}'.format(gpu))
     else:
@@ -245,12 +261,14 @@ def get_ntk_n(networks, recalbn=0, train_mode=False, num_batch=None,
 
 
 def compute_NTK_score(gpu, model, resolution, batch_size):
+    """get NTK score"""
     ntk_score = get_ntk_n([model], recalbn=0, train_mode=True, num_batch=1,
                            batch_size=batch_size, image_size=resolution, gpu=gpu)[0]
     return -1 * ntk_score
 
 
 def parse_cmd_options(argv):
+    """parse command line"""
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, default=16, help='number of instances in one mini-batch.')
     parser.add_argument('--input_image_size', type=int, default=None,

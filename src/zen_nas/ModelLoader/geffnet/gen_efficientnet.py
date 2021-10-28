@@ -26,6 +26,7 @@ A generic MobileNet class with building blocks to support a variety of models:
 
 Hacked together by / Copyright 2020 Ross Wightman
 """
+
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -257,6 +258,7 @@ class GenEfficientNet(nn.Module):
                 initialize_weight_default(m, n)
 
     def features(self, x):
+        """compute feature map"""
         x = self.conv_stem(x)
         x = self.bn1(x)
         x = self.act1(x)
@@ -267,6 +269,7 @@ class GenEfficientNet(nn.Module):
         return x
 
     def extract_stage_features_and_logit(self, x, target_downsample_ratio=16):
+        """extract stages according to downsample ratio and return stage features and logit"""
         stage_features_list = []
         image_size = x.shape[2]
         x = self.conv_stem(x)
@@ -299,6 +302,7 @@ class GenEfficientNet(nn.Module):
         return stage_features_list, logit
 
     def as_sequential(self):
+        """pack layers as sequential"""
         layers = [self.conv_stem, self.bn1, self.act1]
         layers.extend(self.blocks)
         layers.extend([
@@ -307,6 +311,7 @@ class GenEfficientNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
+        """forward"""
         x = self.features(x)
         x = self.global_pool(x)
         x = x.flatten(1)
@@ -316,6 +321,7 @@ class GenEfficientNet(nn.Module):
 
 
 def _create_model(model_kwargs, variant, pretrained=False):
+    """create model from model_kwargs"""
     as_sequential = model_kwargs.pop('as_sequential', False)
     model = GenEfficientNet(**model_kwargs)
     if pretrained:
@@ -578,6 +584,7 @@ def _gen_efficientnet(variant, channel_multiplier=1.0, depth_multiplier=1.0, pre
 
 
 def _gen_efficientnet_edge(variant, channel_multiplier=1.0, depth_multiplier=1.0, pretrained=False, **kwargs):
+    """creates an efficientnet-edge model"""
     arch_def = [
         # NOTE `fc` is present to override a mismatch between stem channels and in chs not
         # present in other models

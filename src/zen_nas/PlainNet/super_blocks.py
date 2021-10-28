@@ -2,6 +2,7 @@
 Copyright (C) 2010-2021 Alibaba Group Holding Limited.
 '''
 
+"""define SuperConvBlock class with different kernel size"""
 
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -16,7 +17,10 @@ import global_utils
 import PlainNet
 from PlainNet import _get_right_parentheses_index_, basic_blocks
 
+
 class PlainNetSuperBlockClass(basic_blocks.PlainNetBasicBlockClass):
+    """SuperBlock base class"""
+
     def __init__(self, in_channels=None, out_channels=None, stride=None, sub_layers=None, no_create=False, **kwargs):
         super(PlainNetSuperBlockClass, self).__init__()
         self.in_channels = in_channels
@@ -28,6 +32,8 @@ class PlainNetSuperBlockClass(basic_blocks.PlainNetBasicBlockClass):
         self.module_list = None
 
     def forward(self, x):
+        """block forward"""
+
         output = x
         for block in self.block_list:
             output = block(output)
@@ -42,12 +48,15 @@ class PlainNetSuperBlockClass(basic_blocks.PlainNetBasicBlockClass):
                                                                self.stride, self.sub_layers)
 
     def get_output_resolution(self, input_resolution):
+        """output feature size"""
         resolution = input_resolution
         for block in self.block_list:
             resolution = block.get_output_resolution(resolution)
         return resolution
 
     def get_FLOPs(self, input_resolution):
+        """model FLOPs"""
+
         resolution = input_resolution
         flops = 0.0
         for block in self.block_list:
@@ -57,12 +66,16 @@ class PlainNetSuperBlockClass(basic_blocks.PlainNetBasicBlockClass):
 
 
     def get_model_size(self):
+        """model parameters"""
+
         model_size = 0.0
         for block in self.block_list:
             model_size += block.get_model_size()
         return model_size
 
     def set_in_channels(self, c):
+        """set input channels"""
+
         self.in_channels = c
         if len(self.block_list) == 0:
             self.out_channels = c
@@ -76,10 +89,18 @@ class PlainNetSuperBlockClass(basic_blocks.PlainNetBasicBlockClass):
             self.block_list[1].set_in_channels(last_channels)
 
     def encode_structure(self):
+        """pack channels and sub_layers with list"""
+
         return [self.out_channels, self.sub_layers]
 
     @classmethod
     def create_from_str(cls, s, no_create=False, **kwargs):
+        """ class method
+
+            :param s (str): superblock str
+            :return cls instance
+        """
+
         assert cls.is_instance_from_str(s)
         idx = _get_right_parentheses_index_(s)
         assert idx is not None
@@ -105,6 +126,8 @@ class PlainNetSuperBlockClass(basic_blocks.PlainNetBasicBlockClass):
 
 
 class SuperConvKXBNRELU(PlainNetSuperBlockClass):
+    """SuperConv block"""
+
     def __init__(self, in_channels=None, out_channels=None, stride=None, sub_layers=None, kernel_size=None,
                  no_create=False, no_reslink=False, no_BN=False, **kwargs):
         super(SuperConvKXBNRELU, self).__init__(**kwargs)
@@ -150,6 +173,8 @@ class SuperConvKXBNRELU(PlainNetSuperBlockClass):
             self.module_list = None
 
     def forward_pre_relu(self, x):
+        """block forward"""
+
         output = x
         for block in self.block_list[0:-1]:
             output = block(output)
@@ -164,9 +189,13 @@ class SuperConvKXBNRELU(PlainNetSuperBlockClass):
             self.block_name, self.in_channels, self.out_channels, self.stride, self.sub_layers, self.kernel_size)
 
     def split(self, split_layer_threshold):
+        """return str(self)"""
+
         return str(self)
 
     def structure_scale(self, scale=1.0, channel_scale=None, sub_layer_scale=None):
+        """ adjust the number to a specific multiple or range"""
+
         if channel_scale is None:
             channel_scale = scale
         if sub_layer_scale is None:
@@ -181,6 +210,8 @@ class SuperConvKXBNRELU(PlainNetSuperBlockClass):
 
 
 class SuperConvK1BNRELU(SuperConvKXBNRELU):
+    """kernel size 1x1"""
+
     def __init__(self, in_channels=None, out_channels=None, stride=None, sub_layers=None, no_create=False, **kwargs):
         super(SuperConvK1BNRELU, self).__init__(in_channels=in_channels, out_channels=out_channels, stride=stride,
                                            sub_layers=sub_layers,
@@ -188,6 +219,8 @@ class SuperConvK1BNRELU(SuperConvKXBNRELU):
                                            no_create=no_create, **kwargs)
 
 class SuperConvK3BNRELU(SuperConvKXBNRELU):
+    """kernel size 3x3"""
+
     def __init__(self, in_channels=None, out_channels=None, stride=None, sub_layers=None, no_create=False, **kwargs):
         super(SuperConvK3BNRELU, self).__init__(in_channels=in_channels, out_channels=out_channels, stride=stride,
                                            sub_layers=sub_layers,
@@ -195,6 +228,8 @@ class SuperConvK3BNRELU(SuperConvKXBNRELU):
                                            no_create=no_create, **kwargs)
 
 class SuperConvK5BNRELU(SuperConvKXBNRELU):
+    """kernel size 5x5"""
+
     def __init__(self, in_channels=None, out_channels=None, stride=None, sub_layers=None, no_create=False, **kwargs):
         super(SuperConvK5BNRELU, self).__init__(in_channels=in_channels, out_channels=out_channels, stride=stride,
                                            sub_layers=sub_layers,
@@ -203,6 +238,8 @@ class SuperConvK5BNRELU(SuperConvKXBNRELU):
 
 
 class SuperConvK7BNRELU(SuperConvKXBNRELU):
+    """"kernel size 7x7"""
+
     def __init__(self, in_channels=None, out_channels=None, stride=None, sub_layers=None, no_create=False, **kwargs):
         super(SuperConvK7BNRELU, self).__init__(in_channels=in_channels, out_channels=out_channels, stride=stride,
                                            sub_layers=sub_layers,
@@ -211,6 +248,8 @@ class SuperConvK7BNRELU(SuperConvKXBNRELU):
 
 
 def register_netblocks_dict(netblocks_dict: dict):
+    """add different kernel size block to block dict"""
+
     this_py_file_netblocks_dict = {
         'SuperConvK1BNRELU': SuperConvK1BNRELU,
         'SuperConvK3BNRELU': SuperConvK3BNRELU,

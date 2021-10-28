@@ -1,3 +1,5 @@
+"""load all kinds of activations"""
+
 from geffnet import config
 from geffnet.activations.activations_me import *
 from geffnet.activations.activations_jit import *
@@ -55,32 +57,38 @@ _OVERRIDE_LAYER = dict()
 
 
 def add_override_act_fn(name, fn):
+    """add function to dict"""
     global _OVERRIDE_FN
     _OVERRIDE_FN[name] = fn
 
 
 def update_override_act_fn(overrides):
+    """update function dict"""
     assert isinstance(overrides, dict)
     global _OVERRIDE_FN
     _OVERRIDE_FN.update(overrides)
 
 
 def clear_override_act_fn():
+    """clear function dict"""
     global _OVERRIDE_FN
     _OVERRIDE_FN = dict()
 
 
 def add_override_act_layer(name, fn):
+    """add layer to dict"""
     _OVERRIDE_LAYER[name] = fn
 
 
 def update_override_act_layer(overrides):
+    """update layer dict"""
     assert isinstance(overrides, dict)
     global _OVERRIDE_LAYER
     _OVERRIDE_LAYER.update(overrides)
 
 
 def clear_override_act_layer():
+    """clear layer dict"""
     global _OVERRIDE_LAYER
     _OVERRIDE_LAYER = dict()
 
@@ -118,5 +126,3 @@ def get_act_layer(name='relu'):
     if not no_jit and name in _ACT_LAYER_JIT:  # jit scripted models should be okay for export/scripting
         return _ACT_LAYER_JIT[name]
     return _ACT_LAYER_DEFAULT[name]
-
-

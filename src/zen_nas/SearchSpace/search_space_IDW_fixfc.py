@@ -2,9 +2,9 @@
 Copyright (C) 2010-2021 Alibaba Group Holding Limited.
 '''
 
+"""define SuperResIDW Block search space"""
 
 import os, sys
-
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 import itertools
@@ -53,6 +53,7 @@ __block_type_min_channels_base_dict__ = {
 
 
 def get_select_student_channels_list(out_channels):
+    """generate all possible channels"""
     the_list = [out_channels * 2.5, out_channels * 2, out_channels * 1.5, out_channels * 1.25,
                 out_channels,
                 out_channels / 1.25, out_channels / 1.5, out_channels / 2, out_channels / 2.5]
@@ -64,6 +65,7 @@ def get_select_student_channels_list(out_channels):
 
 
 def get_select_student_sublayers_list(sub_layers):
+    """generate all possible sublayers"""
     the_list = [sub_layers,
                 sub_layers + 1, sub_layers + 2,
                 sub_layers - 1, sub_layers - 2, ]
@@ -74,6 +76,13 @@ def get_select_student_sublayers_list(sub_layers):
 
 
 def gen_search_space(block_list, block_id):
+    """ generate all possible blocks
+
+        :param block_list (list): block list
+        :param block_id (int): block index
+        :return list(list()) 
+    """
+    
     the_block = block_list[block_id]
     student_blocks_list_list = []
 

@@ -1,7 +1,7 @@
-'''
-Copyright (C) 2010-2021 Alibaba Group Holding Limited.
-'''
+# Copyright 2019 ZTE corporation. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.
 
+"""use evolutionay algorithm to search best network structure"""
 
 import os, sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -23,6 +23,7 @@ working_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 def parse_cmd_options(argv):
+    """parse command line"""
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', type=int, default=None)
     parser.add_argument('--zero_shot_score', type=str, default=None,
@@ -57,6 +58,14 @@ def parse_cmd_options(argv):
 
 def get_new_random_structure_str(AnyPlainNet, structure_str, num_classes, get_search_space_func,
                                  num_replaces=1):
+    """get new structure str from search space
+        :param AnyPlainNet: model class
+        :param structure_str (str): model string
+        :param num_classes (int): class number
+        :param get_serach_space_func: function
+        :num_replaces (int): replace number of block
+        :return structure_str 
+    """
     the_net = AnyPlainNet(num_classes=num_classes, plainnet_struct=structure_str, no_create=True)
     assert isinstance(the_net, PlainNet.PlainNet)
     selected_random_id_set = set()
@@ -97,6 +106,7 @@ def get_new_random_structure_str(AnyPlainNet, structure_str, num_classes, get_se
 
 
 def get_splitted_structure_str(AnyPlainNet, structure_str, num_classes):
+    """split the network string"""
     the_net = AnyPlainNet(num_classes=num_classes, plainnet_struct=structure_str, no_create=True)
     assert hasattr(the_net, 'split')
     splitted_net_str = the_net.split(split_layer_threshold=6)
@@ -104,6 +114,12 @@ def get_splitted_structure_str(AnyPlainNet, structure_str, num_classes):
 
 
 def get_latency(AnyPlainNet, random_structure_str, gpu, args):
+    """build model and compute model latency
+        :param AnyPlainNet: model class
+        :param random_structure_str (str): model string
+        :param gpu (int): gpu index
+        :return latency
+    """
     the_model = AnyPlainNet(num_classes=args.num_classes, plainnet_struct=random_structure_str,
                             no_create=False, no_reslink=False)
     if gpu is not None:
@@ -119,6 +135,14 @@ def get_latency(AnyPlainNet, random_structure_str, gpu, args):
 
 
 def compute_nas_score(AnyPlainNet, random_structure_str, gpu, args):
+    """ compute net score
+
+        :param AnyPlainNet: model class
+        :param random_structure_str (str): model string
+        :param gpu (int): gpu index
+        :param args (list): sys.argv
+        :return score
+    """
     # compute network zero-shot proxy score
     the_model = AnyPlainNet(num_classes=args.num_classes, plainnet_struct=random_structure_str,
                             no_create=False, no_reslink=True)
@@ -172,6 +196,7 @@ def compute_nas_score(AnyPlainNet, random_structure_str, gpu, args):
 
 
 def load_py_module_from_file_list(search_space_list):
+    """get search space from module files"""
     candidate_block_list = []
     for search_space in search_space_list:
         block_space = global_utils.load_py_module_from_path(search_space)
@@ -180,6 +205,7 @@ def load_py_module_from_file_list(search_space_list):
 
 
 def main(args, argv):
+    """network evolutionary"""
     gpu = args.gpu
     if gpu is not None:
         torch.cuda.set_device('cuda:{}'.format(gpu))

@@ -1,3 +1,6 @@
+
+"""load image and get dataset"""
+
 from .vision import VisionDataset
 
 from PIL import Image
@@ -33,6 +36,7 @@ def is_image_file(filename):
 
 
 def make_dataset(dir, class_to_idx, extensions=None, is_valid_file=None):
+    """make dataset"""
     images = []
     dir = os.path.expanduser(dir)
     if not ((extensions is None) ^ (is_valid_file is None)):
@@ -151,6 +155,7 @@ IMG_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm', '.tif', '.tif
 
 
 def pil_loader(path):
+    """return RGB img"""
     # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
     with open(path, 'rb') as f:
         img = Image.open(f)
@@ -158,6 +163,7 @@ def pil_loader(path):
 
 
 def accimage_loader(path):
+    """load img from path"""
     import accimage
     try:
         return accimage.Image(path)
@@ -167,6 +173,7 @@ def accimage_loader(path):
 
 
 def default_loader(path):
+    """default load img from path"""
     from torchvision import get_image_backend
     if get_image_backend() == 'accimage':
         return accimage_loader(path)

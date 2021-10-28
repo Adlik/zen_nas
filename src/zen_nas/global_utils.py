@@ -2,6 +2,8 @@
 Copyright (C) 2010-2021 Alibaba Group Holding Limited.
 '''
 
+"""useful function to support model train, test and search"""
+
 import os
 import distutils.dir_util
 import pprint, ast, argparse, logging
@@ -10,6 +12,7 @@ import torch
 
 
 def load_py_module_from_path(module_path, module_name=None):
+    """load module from given path"""
     if module_path.find(':') > 0:
         split_path = module_path.split(':')
         module_path = split_path[0]
@@ -34,14 +37,17 @@ def load_py_module_from_path(module_path, module_name=None):
         return getattr(any_module, function_name)
 
 def mkfilepath(filename):
+    """mkdir a folder according file path"""
     distutils.dir_util.mkpath(os.path.dirname(filename))
 
 
 def mkdir(dirname):
+    """mkdir a folder"""
     distutils.dir_util.mkpath(dirname)
 
 
 def smart_round(x, base=None):
+    """change x to a multiple of base"""
     if base is None:
         if x > 32 * 8:
             round_base = 32
@@ -55,6 +61,7 @@ def smart_round(x, base=None):
     return max(round_base, round(x / float(round_base)) * round_base)
 
 def save_pyobj(filename, pyobj):
+    """save pyobj"""
     mkfilepath(filename)
     the_s = pprint.pformat(pyobj, indent=2, width=120, compact=True)
     with open(filename, 'w') as fid:
@@ -62,6 +69,7 @@ def save_pyobj(filename, pyobj):
 
 
 def load_pyobj(filename):
+    """load pyobj"""
     with open(filename, 'r') as fid:
         the_s = fid.readlines()
 
@@ -74,6 +82,7 @@ def load_pyobj(filename):
 
 
 def parse_cmd_options(argv):
+    """"command parameters used in model train, test and else """
 
     parser = argparse.ArgumentParser(description='Default command line parser.')
 
@@ -214,6 +223,7 @@ def parse_cmd_options(argv):
 
 
 def create_logging(log_filename=None, level=logging.INFO):
+    """create log object"""
     if log_filename is not None:
         mkfilepath(log_filename)
         logging.basicConfig(
@@ -236,6 +246,8 @@ def create_logging(log_filename=None, level=logging.INFO):
 
 
 class LearningRateScheduler():
+    """model learning rate scheduler"""
+
     def __init__(self,
                  mode,
                  lr,
@@ -261,9 +273,11 @@ class LearningRateScheduler():
             self.stage_list = [int(x) for x in self.stage_list.split(',')]
 
     def update_lr(self, batch_size):
+        """update learning rate"""
         self.num_received_training_instances += batch_size
 
     def get_lr(self, num_received_training_instances=None):
+        """get learning rate"""
         if num_received_training_instances is None:
             num_received_training_instances = self.num_received_training_instances
 

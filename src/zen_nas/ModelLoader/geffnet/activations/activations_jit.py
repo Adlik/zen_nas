@@ -36,44 +36,54 @@ def mish_jit(x, _inplace: bool = False):
 
 
 class SwishJit(nn.Module):
+    """jit-scripted swish module"""
     def __init__(self, inplace: bool = False):
         super(SwishJit, self).__init__()
 
     def forward(self, x):
+        """forward"""
         return swish_jit(x)
 
 
 class MishJit(nn.Module):
+    """jit-scripted mish module"""
     def __init__(self, inplace: bool = False):
         super(MishJit, self).__init__()
 
     def forward(self, x):
+        """forward"""
         return mish_jit(x)
 
 
 @torch.jit.script
 def hard_sigmoid_jit(x, inplace: bool = False):
+    """jit-scripted hard sigmoid function"""
     # return F.relu6(x + 3.) / 6.
     return (x + 3).clamp(min=0, max=6).div(6.)  # clamp seems ever so slightly faster?
 
 
 class HardSigmoidJit(nn.Module):
+    """jit-scripted hard sigmoid module"""
     def __init__(self, inplace: bool = False):
         super(HardSigmoidJit, self).__init__()
 
     def forward(self, x):
+        """forward"""
         return hard_sigmoid_jit(x)
 
 
 @torch.jit.script
 def hard_swish_jit(x, inplace: bool = False):
+    """jit-scripted hard swish function"""
     # return x * (F.relu6(x + 3.) / 6)
     return x * (x + 3).clamp(min=0, max=6).div(6.)  # clamp seems ever so slightly faster?
 
 
 class HardSwishJit(nn.Module):
+    """jit-scripted hard swish module"""
     def __init__(self, inplace: bool = False):
         super(HardSwishJit, self).__init__()
 
     def forward(self, x):
+        """forward"""
         return hard_swish_jit(x)

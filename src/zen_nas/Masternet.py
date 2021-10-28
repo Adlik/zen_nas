@@ -2,6 +2,8 @@
 Copyright (C) 2010-2021 Alibaba Group Holding Limited.
 '''
 
+"""defin MasterNet class"""
+
 import os, sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -14,6 +16,7 @@ from PlainNet import parse_cmd_options, _create_netblock_list_from_str_, basic_b
 
 
 def parse_cmd_options(argv):
+    """parse command line"""
     parser = argparse.ArgumentParser()
     parser.add_argument('--no_BN', action='store_true')
     parser.add_argument('--no_reslink', action='store_true')
@@ -23,6 +26,8 @@ def parse_cmd_options(argv):
 
 
 class MasterNet(PlainNet.PlainNet):
+    """model calss""""
+
     def __init__(self, argv=None, opt=None, num_classes=None, plainnet_struct=None, no_create=False,
                  no_reslink=None, no_BN=None, use_se=None):
 
@@ -66,6 +71,7 @@ class MasterNet(PlainNet.PlainNet):
                 layer.eps = 1e-3
 
     def extract_stage_features_and_logit(self, x, target_downsample_ratio=None):
+        """get stages according to downsample ratio"""
         stage_features_list = []
         image_size = x.shape[2]
         output = x
@@ -85,6 +91,7 @@ class MasterNet(PlainNet.PlainNet):
         return stage_features_list, logit
 
     def forward(self, x):
+        """forward"""
         output = x
         for block_id, the_block in enumerate(self.block_list):
             output = the_block(output)
@@ -96,12 +103,14 @@ class MasterNet(PlainNet.PlainNet):
         return output
 
     def forward_pre_GAP(self, x):
+        """compute output before global averag pool"""
         output = x
         for the_block in self.block_list:
             output = the_block(output)
         return output
 
     def get_FLOPs(self, input_resolution):
+        """model FLOPs"""
         the_res = input_resolution
         the_flops = 0
         for the_block in self.block_list:
@@ -113,6 +122,7 @@ class MasterNet(PlainNet.PlainNet):
         return the_flops
 
     def get_model_size(self):
+        """model parameters"""
         the_size = 0
         for the_block in self.block_list:
             the_size += the_block.get_model_size()
@@ -122,6 +132,7 @@ class MasterNet(PlainNet.PlainNet):
         return the_size
 
     def get_num_layers(self):
+        """model layers"""
         num_layers = 0
         for block in self.block_list:
             assert isinstance(block, super_blocks.PlainNetSuperBlockClass)
@@ -129,6 +140,7 @@ class MasterNet(PlainNet.PlainNet):
         return num_layers
 
     def replace_block(self, block_id, new_block):
+        """replace block_list[block_id] with new_block"""
         self.block_list[block_id] = new_block
 
         if block_id < len(self.block_list) - 1:
@@ -143,12 +155,14 @@ class MasterNet(PlainNet.PlainNet):
         self.module_list = nn.ModuleList(self.block_list)
 
     def split(self, split_layer_threshold):
+        """split block when block layers exceed threshold"""
         new_str = ''
         for block in self.block_list:
             new_str += block.split(split_layer_threshold=split_layer_threshold)
         return new_str
 
     def init_parameters(self):
+        """initialize model"""
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.xavier_normal_(m.weight.data, gain=3.26033)

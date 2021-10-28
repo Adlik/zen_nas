@@ -5,6 +5,7 @@ The geffnet module is modified from:
 https://github.com/rwightman/gen-efficientnet-pytorch
 '''
 
+"""get studet and teacher model"""
 
 import os,sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -19,7 +20,15 @@ torchvision_model_name_list = sorted(name for name in torchvision.models.__dict_
     if name.islower() and not name.startswith("__")
     and callable(torchvision.models.__dict__[name]))
 
+
 def _get_model_(arch, num_classes, pretrained=False, opt=None, argv=None):
+    """create arch model and return
+
+        :param arch (str): model
+        :param num_classes (int): class number
+        :param pretrained (bool): pretrained
+        :return arch model
+    """
 
     # load torch vision model
     if arch in torchvision_model_name_list:
@@ -78,5 +87,7 @@ def _get_model_(arch, num_classes, pretrained=False, opt=None, argv=None):
 
     return model
 
+
 def get_model(opt, argv):
+    """get arch model"""
     return _get_model_(arch=opt.arch, num_classes=opt.num_classes, pretrained=opt.pretrained, opt=opt, argv=argv)

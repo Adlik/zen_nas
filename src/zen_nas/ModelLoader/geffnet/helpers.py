@@ -1,6 +1,7 @@
 """ Checkpoint loading / state_dict helpers
 Copyright 2020 Ross Wightman
 """
+
 import torch
 import os
 from collections import OrderedDict
@@ -11,6 +12,7 @@ except ImportError:
 
 
 def load_checkpoint(model, checkpoint_path):
+    """load checkpoint"""
     if checkpoint_path and os.path.isfile(checkpoint_path):
         print("=> Loading checkpoint '{}'".format(checkpoint_path))
         checkpoint = torch.load(checkpoint_path)
@@ -32,6 +34,7 @@ def load_checkpoint(model, checkpoint_path):
 
 
 def load_pretrained(model, url, filter_fn=None, strict=True):
+    """load pretrained model and process weights according to the model """
     if not url:
         print("=> Warning: Pretrained model URL is empty, using random initialization.")
         return

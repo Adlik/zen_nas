@@ -3,6 +3,8 @@ This file is modified from:
 https://github.com/DeepVoltaire/AutoAugment/blob/master/autoaugment.py
 '''
 
+"""Auto Augmentation implement"""
+
 from PIL import Image, ImageEnhance, ImageOps
 import numpy as np
 import random
@@ -176,63 +178,80 @@ class SVHNPolicy(object):
 
 
 def _shearX(img, magnitude):
+    """shearX"""
     return img.transform(
         img.size, Image.AFFINE, (1, magnitude * random.choice([-1, 1]), 0, 0, 1, 0),
         Image.BICUBIC, fillcolor=fillcolor)
 
 def _shearY(img, magnitude):
+    """shearY"""
     return img.transform(
         img.size, Image.AFFINE, (1, 0, 0, magnitude * random.choice([-1, 1]), 1, 0),
         Image.BICUBIC, fillcolor=fillcolor)
 
 def _translateX(img, magnitude):
+    """translateX"""
     return img.transform(
         img.size, Image.AFFINE, (1, 0, magnitude * img.size[0] * random.choice([-1, 1]), 0, 1, 0),
         fillcolor=fillcolor)
 
 def _translateY(img, magnitude):
+    """translateY"""
     return img.transform(
         img.size, Image.AFFINE, (1, 0, 0, 0, 1, magnitude * img.size[1] * random.choice([-1, 1])),
         fillcolor=fillcolor)
 
 def _rotate(img, magnitude):
+    """rotate image with magnitude"""
     return rotate_with_fill(img, magnitude)
 
 def _color(img, magnitude):
+    """enhance color"""
     return ImageEnhance.Color(img).enhance(1 + magnitude * random.choice([-1, 1]))
 
 def _posterize(img, magnitude):
+    """posterize"""
     return ImageOps.posterize(img, magnitude)
 
 def _solarize(img, magnitude):
+    """solarize"""
     return ImageOps.solarize(img, magnitude)
 
 def _contrast(img, magnitude):
+    """contrast"""
     return ImageEnhance.Contrast(img).enhance(
         1 + magnitude * random.choice([-1, 1]))
 
 def _sharpness(img, magnitude):
+    """sharpness"""
     return ImageEnhance.Sharpness(img).enhance(
         1 + magnitude * random.choice([-1, 1]))
 
 def _brightness(img, magnitude):
+    """brightness"""
     return ImageEnhance.Brightness(img).enhance(
         1 + magnitude * random.choice([-1, 1]))
 
 def _autocontrast(img, magnitude):
+    """autocontrast image"""
     return ImageOps.autocontrast(img)
 
 def _equalize(img, magnitude):
+    """equalize image"""
     return ImageOps.equalize(img)
 
 def _invert(img, magnitude):
+    """invert image"""
     return ImageOps.invert(img)
 
 def rotate_with_fill(img, magnitude):
+    """rotate and fill the image"""
     rot = img.convert("RGBA").rotate(magnitude)
     return Image.composite(rot, Image.new("RGBA", rot.size, (128,) * 4), rot).convert(img.mode)
 
 class SubPolicy(object):
+    """sub policy"""
+
     def __init__(self, p1, operation1, magnitude_idx1, p2, operation2, magnitude_idx2, fillcolor=(128, 128, 128)):
         ranges = {
             "shearX": np.linspace(0, 0.3, 10),

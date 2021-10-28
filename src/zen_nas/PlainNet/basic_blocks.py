@@ -2,6 +2,7 @@
 Copyright (C) 2010-2021 Alibaba Group Holding Limited.
 '''
 
+"""define all needed basic layer class"""
 
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -14,7 +15,10 @@ import uuid
 
 from PlainNet import _get_right_parentheses_index_, _create_netblock_list_from_str_
 
+
 class PlainNetBasicBlockClass(nn.Module):
+    """BasicBlock base class"""
+
     def __init__(self, in_channels=None, out_channels=None, stride=1, no_create=False, block_name=None, **kwargs):
         super(PlainNetBasicBlockClass, self).__init__(**kwargs)
         self.in_channels = in_channels
@@ -26,6 +30,7 @@ class PlainNetBasicBlockClass(nn.Module):
             self.block_name = 'uuid{}'.format(uuid.uuid4().hex)
 
     def forward(self, x):
+        """subclass implementation"""
         raise RuntimeError('Not implemented')
 
     def __str__(self):
@@ -35,19 +40,29 @@ class PlainNetBasicBlockClass(nn.Module):
         return type(self).__name__ + '({}|{},{},{})'.format(self.block_name, self.in_channels, self.out_channels, self.stride)
 
     def get_output_resolution(self, input_resolution):
+        """subclass implementation"""
         raise RuntimeError('Not implemented')
 
     def get_FLOPs(self, input_resolution):
+        """subclass implementation"""
         raise RuntimeError('Not implemented')
 
     def get_model_size(self):
+        """subclass implementation"""
         raise RuntimeError('Not implemented')
 
     def set_in_channels(self, c):
+        """subclass implementation"""
         raise RuntimeError('Not implemented')
 
     @classmethod
     def create_from_str(cls, s, no_create=False, **kwargs):
+        """ class method
+
+            :param s (str): basicblock str
+            :return cls instance
+        """
+
         assert PlainNetBasicBlockClass.is_instance_from_str(s)
         idx = _get_right_parentheses_index_(s)
         assert idx is not None
@@ -70,6 +85,7 @@ class PlainNetBasicBlockClass(nn.Module):
 
     @classmethod
     def is_instance_from_str(cls, s):
+        """instance string"""
         if s.startswith(cls.__name__ + '(') and s[-1] == ')':
             return True
         else:
@@ -77,6 +93,8 @@ class PlainNetBasicBlockClass(nn.Module):
 
 
 class AdaptiveAvgPool(PlainNetBasicBlockClass):
+    """Adaptive average pool layer"""
+
     def __init__(self, out_channels, output_size, no_create=False, **kwargs):
         super(AdaptiveAvgPool, self).__init__(**kwargs)
         self.in_channels = out_channels
@@ -87,6 +105,7 @@ class AdaptiveAvgPool(PlainNetBasicBlockClass):
             self.netblock = nn.AdaptiveAvgPool2d(output_size=(self.output_size, self.output_size))
 
     def forward(self, x):
+        """forward"""
         return self.netblock(x)
 
     def __str__(self):
@@ -97,20 +116,30 @@ class AdaptiveAvgPool(PlainNetBasicBlockClass):
                                                          self.out_channels // self.output_size ** 2, self.output_size)
 
     def get_output_resolution(self, input_resolution):
+        """return input size"""
         return self.output_size
 
     def get_FLOPs(self, input_resolution):
+        """0"""
         return 0
 
     def get_model_size(self):
+        """0"""
         return 0
 
     def set_in_channels(self, c):
+        """modify input channels"""
         self.in_channels = c
         self.out_channels = c
 
     @classmethod
     def create_from_str(cls, s, no_create=False, **kwargs):
+         """ class method
+
+            :param s (str): basicblock str
+            :return cls instance
+        """
+
         assert AdaptiveAvgPool.is_instance_from_str(s)
         idx = _get_right_parentheses_index_(s)
         assert idx is not None
@@ -132,6 +161,8 @@ class AdaptiveAvgPool(PlainNetBasicBlockClass):
 
 
 class BN(PlainNetBasicBlockClass):
+    """BN layer"""
+
     def __init__(self, out_channels=None, copy_from=None, no_create=False, **kwargs):
         super(BN, self).__init__(**kwargs)
         self.no_create = no_create
@@ -152,6 +183,7 @@ class BN(PlainNetBasicBlockClass):
                 self.netblock = nn.BatchNorm2d(num_features=self.out_channels)
 
     def forward(self, x):
+        """forward"""
         return self.netblock(x)
 
     def __str__(self):
@@ -161,15 +193,19 @@ class BN(PlainNetBasicBlockClass):
         return 'BN({}|{})'.format(self.block_name, self.out_channels)
 
     def get_output_resolution(self, input_resolution):
+        """return input size"""
         return input_resolution
 
     def get_FLOPs(self, input_resolution):
+        """block FLOPs"""
         return input_resolution ** 2 * self.out_channels
 
     def get_model_size(self):
+        """block parameters"""
         return self.out_channels
 
     def set_in_channels(self, c):
+        """modify input channels"""
         self.in_channels = c
         self.out_channels = c
         if not self.no_create:
@@ -179,6 +215,12 @@ class BN(PlainNetBasicBlockClass):
 
     @classmethod
     def create_from_str(cls, s, no_create=False, **kwargs):
+         """ class method
+
+            :param s (str): block str
+            :return cls instance
+        """
+
         assert BN.is_instance_from_str(s)
         idx = _get_right_parentheses_index_(s)
         assert idx is not None
@@ -195,6 +237,8 @@ class BN(PlainNetBasicBlockClass):
 
 
 class ConvKX(PlainNetBasicBlockClass):
+    """convolutional layer"""
+
     def __init__(self, in_channels=None, out_channels=None, kernel_size=None, stride=None, groups=1, copy_from=None,
                  no_create=False, **kwargs):
         super(ConvKX, self).__init__(**kwargs)
@@ -228,6 +272,7 @@ class ConvKX(PlainNetBasicBlockClass):
                                           padding=self.padding, bias=False, groups=self.groups)
 
     def forward(self, x):
+        """forward"""
         return self.netblock(x)
 
     def __str__(self):
@@ -237,15 +282,19 @@ class ConvKX(PlainNetBasicBlockClass):
         return type(self).__name__ + '({}|{},{},{},{})'.format(self.block_name, self.in_channels, self.out_channels, self.kernel_size, self.stride)
 
     def get_output_resolution(self, input_resolution):
+        """input_size // stride"""
         return input_resolution // self.stride
 
     def get_FLOPs(self, input_resolution):
+        """block FLOPs"""
         return self.in_channels * self.out_channels * self.kernel_size ** 2 * input_resolution ** 2 // self.stride ** 2 // self.groups
 
     def get_model_size(self):
+        """block parameters"""
         return self.in_channels * self.out_channels * self.kernel_size ** 2 // self.groups
 
     def set_in_channels(self, c):
+        """modify input channels"""
         self.in_channels = c
         if not self.no_create:
             self.netblock = nn.Conv2d(in_channels=self.in_channels, out_channels=self.out_channels,
@@ -254,9 +303,14 @@ class ConvKX(PlainNetBasicBlockClass):
             self.netblock.train()
             self.netblock.requires_grad_(True)
 
-
     @classmethod
     def create_from_str(cls, s, no_create=False, **kwargs):
+            """ class method
+
+            :param s (str): block str
+            :return cls instance
+        """
+
         assert cls.is_instance_from_str(s)
         idx = _get_right_parentheses_index_(s)
         assert idx is not None
@@ -279,6 +333,8 @@ class ConvKX(PlainNetBasicBlockClass):
 
 
 class ConvDW(PlainNetBasicBlockClass):
+    """depthwise convolutional layer"""
+
     def __init__(self, out_channels=None, kernel_size=None, stride=None, copy_from=None,
                  no_create=False, **kwargs):
         super(ConvDW, self).__init__(**kwargs)
@@ -313,6 +369,7 @@ class ConvDW(PlainNetBasicBlockClass):
                                           padding=self.padding, bias=False, groups=self.in_channels)
 
     def forward(self, x):
+        """forward"""
         return self.netblock(x)
 
     def __str__(self):
@@ -322,15 +379,20 @@ class ConvDW(PlainNetBasicBlockClass):
         return 'ConvDW({}|{},{},{})'.format(self.block_name, self.out_channels, self.kernel_size, self.stride)
 
     def get_output_resolution(self, input_resolution):
+        """input_size // stride"""
         return input_resolution // self.stride
 
     def get_FLOPs(self, input_resolution):
+        """block FLOPs"""
         return self.out_channels * self.kernel_size ** 2 * input_resolution ** 2 // self.stride ** 2
 
     def get_model_size(self):
+        """block parameters"""
         return self.out_channels * self.kernel_size ** 2
 
     def set_in_channels(self, c):
+        """modify input channels"""
+
         self.in_channels = c
         self.out_channels=self.in_channels
         if not self.no_create:
@@ -344,6 +406,12 @@ class ConvDW(PlainNetBasicBlockClass):
 
     @classmethod
     def create_from_str(cls, s, no_create=False, **kwargs):
+            """ class method
+
+            :param s (str): block str
+            :return cls instance
+        """
+
         assert ConvDW.is_instance_from_str(s)
         idx = _get_right_parentheses_index_(s)
         assert idx is not None
@@ -364,6 +432,8 @@ class ConvDW(PlainNetBasicBlockClass):
                       kernel_size=kernel_size, stride=stride, no_create=no_create, block_name=tmp_block_name), s[idx + 1:]
 
 class ConvKXG2(ConvKX):
+    """convolution group=2"""
+
     def __init__(self, in_channels=None, out_channels=None, kernel_size=None, stride=None, copy_from=None,
                  no_create=False, **kwargs):
         super(ConvKXG2, self).__init__(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size,
@@ -371,6 +441,8 @@ class ConvKXG2(ConvKX):
                                        groups=2, **kwargs)
 
 class ConvKXG4(ConvKX):
+     """convolution group=4"""
+    
     def __init__(self, in_channels=None, out_channels=None, kernel_size=None, stride=None, copy_from=None,
                  no_create=False, **kwargs):
         super(ConvKXG4, self).__init__(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size,
@@ -379,6 +451,8 @@ class ConvKXG4(ConvKX):
 
 
 class ConvKXG8(ConvKX):
+     """convolution group=8"""
+    
     def __init__(self, in_channels=None, out_channels=None, kernel_size=None, stride=None, copy_from=None,
                  no_create=False, **kwargs):
         super(ConvKXG8, self).__init__(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size,
@@ -386,6 +460,8 @@ class ConvKXG8(ConvKX):
                                        groups=8, **kwargs)
 
 class ConvKXG16(ConvKX):
+     """convolution group=16"""
+    
     def __init__(self, in_channels=None, out_channels=None, kernel_size=None, stride=None, copy_from=None,
                  no_create=False, **kwargs):
         super(ConvKXG16, self).__init__(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size,
@@ -393,6 +469,8 @@ class ConvKXG16(ConvKX):
                                        groups=16, **kwargs)
 
 class ConvKXG32(ConvKX):
+     """convolution group=32"""
+    
     def __init__(self, in_channels=None, out_channels=None, kernel_size=None, stride=None, copy_from=None,
                  no_create=False, **kwargs):
         super(ConvKXG32, self).__init__(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size,
@@ -401,6 +479,8 @@ class ConvKXG32(ConvKX):
 
 
 class Flatten(PlainNetBasicBlockClass):
+    """flatten layer"""
+
     def __init__(self, out_channels, no_create=False, **kwargs):
         super(Flatten, self).__init__(**kwargs)
         self.in_channels = out_channels
@@ -408,6 +488,7 @@ class Flatten(PlainNetBasicBlockClass):
         self.no_create = no_create
 
     def forward(self, x):
+        """forward"""
         return torch.flatten(x, 1)
 
     def __str__(self):
@@ -417,15 +498,19 @@ class Flatten(PlainNetBasicBlockClass):
         return 'Flatten({}|{})'.format(self.block_name, self.out_channels)
 
     def get_output_resolution(self, input_resolution):
+        """1"""
         return 1
 
     def get_FLOPs(self, input_resolution):
+        """0"""
         return 0
 
     def get_model_size(self):
+        """0"""
         return 0
 
     def set_in_channels(self, c):
+        """modify input channels"""
         self.in_channels = c
         self.out_channels = c
 
@@ -449,6 +534,8 @@ class Flatten(PlainNetBasicBlockClass):
 
 
 class Linear(PlainNetBasicBlockClass):
+    """Linear layer"""
+
     def __init__(self, in_channels=None, out_channels=None, bias=True, copy_from=None,
                  no_create=False,  **kwargs):
         super(Linear, self).__init__(**kwargs)
@@ -473,6 +560,7 @@ class Linear(PlainNetBasicBlockClass):
                                           bias=self.use_bias)
 
     def forward(self, x):
+        """forward"""
         return self.netblock(x)
 
     def __str__(self):
@@ -482,16 +570,20 @@ class Linear(PlainNetBasicBlockClass):
         return 'Linear({}|{},{},{})'.format(self.block_name, self.in_channels, self.out_channels, int(self.use_bias))
 
     def get_output_resolution(self, input_resolution):
+        """1"""
         assert input_resolution == 1
         return 1
 
     def get_FLOPs(self, input_resolution):
+        """block FLOPs"""
         return self.in_channels * self.out_channels
 
     def get_model_size(self):
+        """block parameters"""
         return self.in_channels * self.out_channels + int(self.use_bias)
 
     def set_in_channels(self, c):
+        """modify input channels"""
         self.in_channels = c
         if not self.no_create:
             self.netblock = nn.Linear(self.in_channels, self.out_channels,
@@ -501,6 +593,12 @@ class Linear(PlainNetBasicBlockClass):
 
     @classmethod
     def create_from_str(cls, s, no_create=False, **kwargs):
+         """ class method
+
+            :param s (str): block str
+            :return cls instance
+        """
+
         assert Linear.is_instance_from_str(s)
         idx = _get_right_parentheses_index_(s)
         assert idx is not None
@@ -522,8 +620,9 @@ class Linear(PlainNetBasicBlockClass):
             block_name=tmp_block_name, no_create=no_create), s[idx+1 :]
 
 
-
 class MaxPool(PlainNetBasicBlockClass):
+    """maxpool layer"""
+
     def __init__(self, out_channels, kernel_size, stride, no_create=False,  **kwargs):
         super(MaxPool, self).__init__(**kwargs)
         self.in_channels = out_channels
@@ -536,6 +635,7 @@ class MaxPool(PlainNetBasicBlockClass):
             self.netblock = nn.MaxPool2d(kernel_size=self.kernel_size, stride=self.stride, padding=self.padding)
 
     def forward(self, x):
+        """forward"""
         return self.netblock(x)
 
     def __str__(self):
@@ -545,15 +645,19 @@ class MaxPool(PlainNetBasicBlockClass):
         return 'MaxPool({}|{},{},{})'.format(self.block_name, self.out_channels, self.kernel_size, self.stride)
 
     def get_output_resolution(self, input_resolution):
+        """input_size // stride"""
         return input_resolution // self.stride
 
     def get_FLOPs(self, input_resolution):
+        """0"""
         return 0
 
     def get_model_size(self):
+        """0"""
         return 0
 
     def set_in_channels(self, c):
+        """modify input channels"""
         self.in_channels = c
         self.out_channels = c
         if not self.no_create:
@@ -561,6 +665,12 @@ class MaxPool(PlainNetBasicBlockClass):
 
     @classmethod
     def create_from_str(cls, s, no_create=False, **kwargs):
+         """ class method
+
+            :param s (str): block str
+            :return cls instance
+        """
+
         assert MaxPool.is_instance_from_str(s)
         idx = _get_right_parentheses_index_(s)
         assert idx is not None
@@ -582,6 +692,8 @@ class MaxPool(PlainNetBasicBlockClass):
 
 
 class Sequential(PlainNetBasicBlockClass):
+    """sequential """
+
     def __init__(self, block_list, no_create=False, **kwargs):
         super(Sequential, self).__init__(**kwargs)
         self.block_list = block_list
@@ -596,6 +708,7 @@ class Sequential(PlainNetBasicBlockClass):
         self.stride = 1024 // res
 
     def forward(self, x):
+        """block forward"""
         output = x
         for inner_block in self.block_list:
             output = inner_block(output)
@@ -612,12 +725,14 @@ class Sequential(PlainNetBasicBlockClass):
         return str(self)
 
     def get_output_resolution(self, input_resolution):
+        """return output size"""
         the_res = input_resolution
         for the_block in self.block_list:
             the_res = the_block.get_output_resolution(the_res)
         return the_res
 
     def get_FLOPs(self, input_resolution):
+        """total block FLOPs"""
         the_res = input_resolution
         the_flops = 0
         for the_block in self.block_list:
@@ -626,6 +741,7 @@ class Sequential(PlainNetBasicBlockClass):
         return the_flops
 
     def get_model_size(self):
+        """total block parameters"""
         the_size = 0
         for the_block in self.block_list:
             the_size += the_block.get_model_size()
@@ -633,6 +749,7 @@ class Sequential(PlainNetBasicBlockClass):
         return the_size
 
     def set_in_channels(self, c):
+        """modify input channels"""
         self.in_channels = c
         if len(self.block_list) == 0:
             self.out_channels = c
@@ -645,6 +762,12 @@ class Sequential(PlainNetBasicBlockClass):
 
     @classmethod
     def create_from_str(cls, s, no_create=False, **kwargs):
+         """ class method
+
+            :param s (str): sequential str
+            :return cls instance
+        """
+
         assert Sequential.is_instance_from_str(s)
         the_right_paraen_idx = _get_right_parentheses_index_(s)
         param_str = s[len('Sequential(')+1:the_right_paraen_idx]
@@ -664,6 +787,8 @@ class Sequential(PlainNetBasicBlockClass):
 
 
 class MultiSumBlock(PlainNetBasicBlockClass):
+    """multiple sum block"""
+
     def __init__(self, block_list, no_create=False, **kwargs):
         super(MultiSumBlock, self).__init__(**kwargs)
         self.block_list = block_list
@@ -678,6 +803,7 @@ class MultiSumBlock(PlainNetBasicBlockClass):
         self.stride = 1024 // res
 
     def forward(self, x):
+        """return the sum of all blocks """
         output = self.block_list[0](x)
         for inner_block in self.block_list[1:]:
             output2 = inner_block(x)
@@ -697,6 +823,7 @@ class MultiSumBlock(PlainNetBasicBlockClass):
 
 
     def get_output_resolution(self, input_resolution):
+        """return single block's output size"""
         the_res = self.block_list[0].get_output_resolution(input_resolution)
         for the_block in self.block_list:
             assert the_res == the_block.get_output_resolution(input_resolution)
@@ -704,6 +831,7 @@ class MultiSumBlock(PlainNetBasicBlockClass):
         return the_res
 
     def get_FLOPs(self, input_resolution):
+        """total block FLOPs """
         the_flops = 0
         for the_block in self.block_list:
             the_flops += the_block.get_FLOPs(input_resolution)
@@ -711,6 +839,7 @@ class MultiSumBlock(PlainNetBasicBlockClass):
         return the_flops
 
     def get_model_size(self):
+        """total block parameters"""
         the_size = 0
         for the_block in self.block_list:
             the_size += the_block.get_model_size()
@@ -718,12 +847,19 @@ class MultiSumBlock(PlainNetBasicBlockClass):
         return the_size
 
     def set_in_channels(self, c):
+        """modify input channels"""
         self.in_channels = c
         for the_block in self.block_list:
             the_block.set_in_channels(c)
 
     @classmethod
     def create_from_str(cls, s, no_create=False, **kwargs):
+         """ class method
+
+            :param s (str): MultiSumBlock str
+            :return cls instance
+        """
+
         assert MultiSumBlock.is_instance_from_str(s)
         idx = _get_right_parentheses_index_(s)
         assert idx is not None
@@ -757,6 +893,8 @@ class MultiSumBlock(PlainNetBasicBlockClass):
 
 
 class MultiCatBlock(PlainNetBasicBlockClass):
+    """multiple block concatenation"""
+
     def __init__(self, block_list, no_create=False, **kwargs):
         super(MultiCatBlock, self).__init__(**kwargs)
         self.block_list = block_list
@@ -771,6 +909,7 @@ class MultiCatBlock(PlainNetBasicBlockClass):
         self.stride = 1024 // res
 
     def forward(self, x):
+        """concatenate all block"""
         output_list = []
         for inner_block in self.block_list:
             output = inner_block(x)
@@ -791,6 +930,7 @@ class MultiCatBlock(PlainNetBasicBlockClass):
         return str(self)
 
     def get_output_resolution(self, input_resolution):
+        """return single block's output  size"""
         the_res = self.block_list[0].get_output_resolution(input_resolution)
         for the_block in self.block_list:
             assert the_res == the_block.get_output_resolution(input_resolution)
@@ -798,6 +938,7 @@ class MultiCatBlock(PlainNetBasicBlockClass):
         return the_res
 
     def get_FLOPs(self, input_resolution):
+        """total block FLOPs"""
         the_flops = 0
         for the_block in self.block_list:
             the_flops += the_block.get_FLOPs(input_resolution)
@@ -805,6 +946,7 @@ class MultiCatBlock(PlainNetBasicBlockClass):
         return the_flops
 
     def get_model_size(self):
+        """total block parameters"""
         the_size = 0
         for the_block in self.block_list:
             the_size += the_block.get_model_size()
@@ -812,6 +954,7 @@ class MultiCatBlock(PlainNetBasicBlockClass):
         return the_size
 
     def set_in_channels(self, c):
+        """modify input channels"""
         self.in_channels = c
         for the_block in self.block_list:
             the_block.set_in_channels(c)
@@ -820,6 +963,12 @@ class MultiCatBlock(PlainNetBasicBlockClass):
 
     @classmethod
     def create_from_str(cls, s, no_create=False, **kwargs):
+        """ class method
+
+            :param s (str): MultiCatBlock str
+            :return cls instance
+        """
+
         assert MultiCatBlock.is_instance_from_str(s)
         idx = _get_right_parentheses_index_(s)
         assert idx is not None
@@ -855,6 +1004,8 @@ class MultiCatBlock(PlainNetBasicBlockClass):
 
 
 class RELU(PlainNetBasicBlockClass):
+    """RELU layer"""
+
     def __init__(self, out_channels, no_create=False, **kwargs):
         super(RELU, self).__init__(**kwargs)
         self.in_channels = out_channels
@@ -862,6 +1013,7 @@ class RELU(PlainNetBasicBlockClass):
         self.no_create = no_create
 
     def forward(self, x):
+        """forward"""
         return F.relu(x)
 
     def __str__(self):
@@ -871,20 +1023,30 @@ class RELU(PlainNetBasicBlockClass):
         return 'RELU({}|{})'.format(self.block_name, self.out_channels)
 
     def get_output_resolution(self, input_resolution):
+        """input size"""
         return input_resolution
 
     def get_FLOPs(self, input_resolution):
+        """0"""
         return 0
 
     def get_model_size(self):
+        """0"""
         return 0
 
     def set_in_channels(self, c):
+        """modify input channels"""
         self.in_channels = c
         self.out_channels = c
 
     @classmethod
     def create_from_str(cls, s, no_create=False, **kwargs):
+        """ class method
+
+            :param s (str): RELU str
+            :return cls instance
+        """
+
         assert RELU.is_instance_from_str(s)
         idx = _get_right_parentheses_index_(s)
         assert idx is not None
@@ -901,11 +1063,11 @@ class RELU(PlainNetBasicBlockClass):
         return RELU(out_channels=out_channels, no_create=no_create, block_name=tmp_block_name), s[idx+1:]
 
 
-
 class ResBlock(PlainNetBasicBlockClass):
     '''
     ResBlock(in_channles, inner_blocks_str). If in_channels is missing, use block_list[0].in_channels as in_channels
     '''
+
     def __init__(self, block_list, in_channels=None, stride=None, no_create=False, **kwargs):
         super(ResBlock, self).__init__(**kwargs)
         self.block_list = block_list
@@ -933,6 +1095,7 @@ class ResBlock(PlainNetBasicBlockClass):
             )
 
     def forward(self, x):
+        """ResBlock forward"""
         if len(self.block_list) == 0:
             return x
 
@@ -964,6 +1127,7 @@ class ResBlock(PlainNetBasicBlockClass):
         return s
 
     def get_output_resolution(self, input_resolution):
+        """ResBlock output size"""
         the_res = input_resolution
         for the_block in self.block_list:
             the_res = the_block.get_output_resolution(the_res)
@@ -971,6 +1135,7 @@ class ResBlock(PlainNetBasicBlockClass):
         return the_res
 
     def get_FLOPs(self, input_resolution):
+        """total block FLOPs"""
         the_res = input_resolution
         the_flops = 0
         for the_block in self.block_list:
@@ -984,6 +1149,7 @@ class ResBlock(PlainNetBasicBlockClass):
         return the_flops
 
     def get_model_size(self):
+        """total block parameters"""
         the_size = 0
         for the_block in self.block_list:
             the_size += the_block.get_model_size()
@@ -994,6 +1160,7 @@ class ResBlock(PlainNetBasicBlockClass):
         return the_size
 
     def set_in_channels(self, c):
+        """modify input channels"""
         self.in_channels = c
         if len(self.block_list) == 0:
             self.out_channels = c
@@ -1016,11 +1183,14 @@ class ResBlock(PlainNetBasicBlockClass):
                 self.proj.train()
                 self.proj.requires_grad_(True)
 
-
-
-
     @classmethod
     def create_from_str(cls, s, no_create=False, **kwargs):
+        """ class method
+
+            :param s (str): ResBlock str
+            :return cls instance
+        """
+
         assert ResBlock.is_instance_from_str(s)
         idx = _get_right_parentheses_index_(s)
         assert idx is not None
@@ -1088,6 +1258,7 @@ class ResBlockProj(PlainNetBasicBlockClass):
             )
 
     def forward(self, x):
+        """ResBlockProj forward"""
         if len(self.block_list) == 0:
             return x
 
@@ -1114,6 +1285,7 @@ class ResBlockProj(PlainNetBasicBlockClass):
         return s
 
     def get_output_resolution(self, input_resolution):
+        """return ResBlockProj output size"""
         the_res = input_resolution
         for the_block in self.block_list:
             the_res = the_block.get_output_resolution(the_res)
@@ -1121,6 +1293,7 @@ class ResBlockProj(PlainNetBasicBlockClass):
         return the_res
 
     def get_FLOPs(self, input_resolution):
+        """total block FLOPs"""
         the_res = input_resolution
         the_flops = 0
         for the_block in self.block_list:
@@ -1134,6 +1307,7 @@ class ResBlockProj(PlainNetBasicBlockClass):
         return the_flops
 
     def get_model_size(self):
+        """total block parameters"""
         the_size = 0
         for the_block in self.block_list:
             the_size += the_block.get_model_size()
@@ -1144,6 +1318,7 @@ class ResBlockProj(PlainNetBasicBlockClass):
         return the_size
 
     def set_in_channels(self, c):
+        """modify input channels"""
         self.in_channels = c
         if len(self.block_list) == 0:
             self.out_channels = c
@@ -1166,11 +1341,14 @@ class ResBlockProj(PlainNetBasicBlockClass):
                 self.proj.train()
                 self.proj.requires_grad_(True)
 
-
-
-
     @classmethod
     def create_from_str(cls, s, no_create=False, **kwargs):
+        """ class method
+
+            :param s (str): ResBlockProj str
+            :return cls instance
+        """
+
         assert ResBlockProj.is_instance_from_str(s)
         idx = _get_right_parentheses_index_(s)
         assert idx is not None
@@ -1208,6 +1386,8 @@ class ResBlockProj(PlainNetBasicBlockClass):
                         stride=the_stride, no_create=no_create, block_name=tmp_block_name), s[idx+1:]
 
 class SE(PlainNetBasicBlockClass):
+    """Squeeze and Excitation"""
+
     def __init__(self, out_channels=None, copy_from=None,
                  no_create=False, **kwargs):
         super(SE, self).__init__(**kwargs)
@@ -1236,6 +1416,7 @@ class SE(PlainNetBasicBlockClass):
                 )
 
     def forward(self, x):
+        """SE forward"""
         se_x = self.netblock(x)
         return se_x * x
 
@@ -1246,17 +1427,21 @@ class SE(PlainNetBasicBlockClass):
         return 'SE({}|{})'.format(self.block_name,self.out_channels)
 
     def get_output_resolution(self, input_resolution):
+        """return input size"""
         return input_resolution
 
     def get_FLOPs(self, input_resolution):
+        """SE FLOPs"""
         return self.in_channels * self.se_channels + self.se_channels * self.out_channels + self.out_channels + \
             self.out_channels * input_resolution ** 2
 
     def get_model_size(self):
+        """SE parameters"""
         return self.in_channels * self.se_channels + 2 * self.se_channels + self.se_channels * self.out_channels + \
             2 * self.out_channels
 
     def set_in_channels(self, c):
+        """modify inoput channels"""
         self.in_channels = c
         if not self.no_create:
             self.netblock = nn.Sequential(
@@ -1275,6 +1460,12 @@ class SE(PlainNetBasicBlockClass):
 
     @classmethod
     def create_from_str(cls, s, no_create=False, **kwargs):
+        """ class method
+
+            :param s (str): SE str
+            :return cls instance
+        """
+
         assert SE.is_instance_from_str(s)
         idx = _get_right_parentheses_index_(s)
         assert idx is not None
@@ -1293,6 +1484,8 @@ class SE(PlainNetBasicBlockClass):
 
 
 class SwishImplementation(torch.autograd.Function):
+    """"swish implementation"""
+
     @staticmethod
     def forward(ctx, i):
         result = i * torch.sigmoid(i)
@@ -1307,6 +1500,8 @@ class SwishImplementation(torch.autograd.Function):
 
 
 class Swish(PlainNetBasicBlockClass):
+    """swish activation"""
+
     def __init__(self, out_channels=None, copy_from=None,
                  no_create=False, **kwargs):
         super(Swish, self).__init__(**kwargs)
@@ -1319,6 +1514,7 @@ class Swish(PlainNetBasicBlockClass):
             self.out_channels = out_channels
 
     def forward(self, x):
+        """swish forward"""
         return SwishImplementation.apply(x)
 
     def __str__(self):
@@ -1328,21 +1524,31 @@ class Swish(PlainNetBasicBlockClass):
         return 'Swish({}|{})'.format(self.block_name, self.out_channels)
 
     def get_output_resolution(self, input_resolution):
+        """return input size"""
         return input_resolution
 
     def get_FLOPs(self, input_resolution):
+        """swish FLOPs"""
         return self.out_channels * input_resolution ** 2
 
     def get_model_size(self):
+        """0"""
         return 0
 
     def set_in_channels(self, c):
+        """modify input channels"""
         self.in_channels = c
         self.out_channels = c
 
 
     @classmethod
     def create_from_str(cls, s, no_create=False, **kwargs):
+        """ class method
+
+            :param s (str): Swish str
+            :return cls instance
+        """
+
         assert Swish.is_instance_from_str(s)
         idx = _get_right_parentheses_index_(s)
         assert idx is not None
@@ -1359,8 +1565,8 @@ class Swish(PlainNetBasicBlockClass):
         return Swish(out_channels=out_channels, no_create=no_create, block_name=tmp_block_name), s[idx + 1:]
 
 
-
 def _add_bn_layer_(block_list):
+    """add bn layer to all blocks in block_list"""
     new_block_list = []
     for the_block in block_list:
         if isinstance(the_block, ConvKX) or isinstance(the_block, ConvDW):
@@ -1382,6 +1588,7 @@ def _add_bn_layer_(block_list):
 
 
 def _remove_bn_layer_(block_list):
+    """remove bn layer from all blocks in block_list"""
     new_block_list = []
     for the_block in block_list:
         if isinstance(the_block, BN):
@@ -1400,6 +1607,7 @@ def _remove_bn_layer_(block_list):
 
 
 def _add_se_layer_(block_list):
+    """add se layer to all blocks in block_list"""
     new_block_list = []
     for the_block in block_list:
         if isinstance(the_block, RELU):
@@ -1419,7 +1627,9 @@ def _add_se_layer_(block_list):
 
     return new_block_list
 
+
 def _replace_relu_with_swish_layer_(block_list):
+    """replace all relu with swish in all blocks"""
     new_block_list = []
     for the_block in block_list:
         if isinstance(the_block, RELU):
@@ -1438,7 +1648,9 @@ def _replace_relu_with_swish_layer_(block_list):
 
     return new_block_list
 
+
 def _fuse_convkx_and_bn_(convkx, bn):
+    """fuse conv and bn layer"""
     the_weight_scale = bn.weight / torch.sqrt(bn.running_var + bn.eps)
     convkx.weight[:] = convkx.weight * the_weight_scale.view((-1, 1, 1, 1))
     the_bias_shift = (bn.weight * bn.running_mean) / \
@@ -1450,6 +1662,7 @@ def _fuse_convkx_and_bn_(convkx, bn):
 
 
 def _fuse_bn_layer_for_blocks_list_(block_list):
+    """apply fuse operation to all blocks"""
     last_block = None  # type: ConvKX
     with torch.no_grad():
         for the_block in block_list:
@@ -1473,9 +1686,8 @@ def _fuse_bn_layer_for_blocks_list_(block_list):
     pass  # end with
 
 
-
-
 def register_netblocks_dict(netblocks_dict: dict):
+    """add all basic layer classes to dict"""
     this_py_file_netblocks_dict = {
         'AdaptiveAvgPool': AdaptiveAvgPool,
         'BN': BN,

@@ -1,9 +1,12 @@
+"""transform class"""
+
 import os
 import torch
 import torch.utils.data as data
 
 
 class VisionDataset(data.Dataset):
+    """transform"""
     _repr_indent = 4
 
     def __init__(self, root, transforms=None, transform=None, target_transform=None):
@@ -52,6 +55,7 @@ class VisionDataset(data.Dataset):
 
 
 class StandardTransform(object):
+    """transform"""
     def __init__(self, transform=None, target_transform=None):
         self.transform = transform
         self.target_transform = target_transform

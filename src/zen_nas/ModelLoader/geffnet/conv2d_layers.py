@@ -20,6 +20,7 @@ from .config import *
 
 
 def _ntuple(n):
+    """return tuple containing n elements"""
     def parse(x):
         if isinstance(x, container_abcs.Iterable):
             return x
@@ -34,15 +35,20 @@ _quadruple = _ntuple(4)
 
 
 def _is_static_pad(kernel_size, stride=1, dilation=1, **_):
+    """determine whether it is static padding"""
     return stride == 1 and (dilation * (kernel_size - 1)) % 2 == 0
+
 
 # OW = (W + 2P - K) / S + 1   output = input
 def _get_padding(kernel_size, stride=1, dilation=1, **_):
+    """get padding value"""
     padding = ((stride - 1) + dilation * (kernel_size - 1)) // 2
     return padding
 
+
 # according above method calculate， but input / stride = output
 def _calc_same_pad(i: int, k: int, s: int, d: int):
+    """calculate same padding"""
     return max((-(i // -s) - 1) * s + (k - 1) * d + 1 - i, 0)
 
 
@@ -55,6 +61,7 @@ def _same_pad_arg(input_size, kernel_size, stride, dilation):
 
 
 def _split_channels(num_chan, num_groups):
+    """get the number of channels in each group"""
     split = [num_chan // num_groups for _ in range(num_groups)]
     split[0] += num_chan - sum(split)
     return split
@@ -63,6 +70,7 @@ def _split_channels(num_chan, num_groups):
 def conv2d_same(
         x, weight: torch.Tensor, bias: Optional[torch.Tensor] = None, stride: Tuple[int, int] = (1, 1),
         padding: Tuple[int, int] = (0, 0), dilation: Tuple[int, int] = (1, 1), groups: int = 1):
+    """conv2d with same padding"""
     ih, iw = x.size()[-2:]
     kh, kw = weight.size()[-2:]
     pad_h = _calc_same_pad(ih, kh, stride[0], dilation[0])
@@ -83,6 +91,7 @@ class Conv2dSame(nn.Conv2d):
             in_channels, out_channels, kernel_size, stride, 0, dilation, groups, bias)
 
     def forward(self, x):
+        """forward"""
         return conv2d_same(x, self.weight, self.bias, self.stride, self.padding, self.dilation, self.groups)
 
 
@@ -101,6 +110,7 @@ class Conv2dSameExport(nn.Conv2d):
         self.pad_input_size = (0, 0)
 
     def forward(self, x):
+        """forward"""
         input_size = x.size()[-2:]
         if self.pad is None:
             pad_arg = _same_pad_arg(input_size, self.weight.size()[-2:], self.stride, self.dilation)
@@ -114,6 +124,7 @@ class Conv2dSameExport(nn.Conv2d):
 
 
 def get_padding_value(padding, kernel_size, **kwargs):
+    """get padding value"""
     dynamic = False
     if isinstance(padding, str):
         # for any string padding, the padding will be calculated for you, one of three ways
@@ -137,6 +148,7 @@ def get_padding_value(padding, kernel_size, **kwargs):
 
 
 def create_conv2d_pad(in_chs, out_chs, kernel_size, **kwargs):
+    """create padding conv2d"""
     padding = kwargs.pop('padding', '')
     kwargs.setdefault('bias', False)
     padding, is_dynamic = get_padding_value(padding, kernel_size, **kwargs)
@@ -177,6 +189,7 @@ class MixedConv2d(nn.ModuleDict):
         self.splits = in_splits
 
     def forward(self, x):
+        """forward"""
         x_split = torch.split(x, self.splits, 1)
         x_out = [conv(x_split[i]) for i, conv in enumerate(self.values())]
         x = torch.cat(x_out, 1)
@@ -184,6 +197,7 @@ class MixedConv2d(nn.ModuleDict):
 
 
 def get_condconv_initializer(initializer, num_experts, expert_shape):
+    """return condconv initializer"""
     def condconv_initializer(weight):
         """CondConv initializer function."""
         num_params = np.prod(expert_shape)
@@ -236,6 +250,7 @@ class CondConv2d(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self):
+        """reset parameters"""
         init_weight = get_condconv_initializer(
             partial(nn.init.kaiming_uniform_, a=math.sqrt(5)), self.num_experts, self.weight_shape)
         init_weight(self.weight)
@@ -247,6 +262,7 @@ class CondConv2d(nn.Module):
             init_bias(self.bias)
 
     def forward(self, x, routing_weights):
+        """forward"""
         B, C, H, W = x.shape
         weight = torch.matmul(routing_weights, self.weight)
         new_weight_shape = (B * self.out_channels, self.in_channels // self.groups) + self.kernel_size
@@ -288,6 +304,7 @@ class CondConv2d(nn.Module):
 
 
 def select_conv2d(in_chs, out_chs, kernel_size, **kwargs):
+    """select conv2d"""
     assert 'groups' not in kwargs  # only use 'depthwise' bool arg
     if isinstance(kernel_size, list):
         assert 'num_experts' not in kwargs  # MixNet + CondConv combo not supported currently
