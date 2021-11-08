@@ -1,10 +1,17 @@
 [MASTER]
 jobs = 0
+ignore = **/ModelLoader/geffnet/*.py,src/zen_nas/tf_train_image_classification.py
 
 [MESSAGES CONTROL]
 disable = missing-class-docstring,
           missing-function-docstring,
-          missing-module-docstring
+          missing-module-docstring,
+          duplicate-code
+
 
 [FORMAT]
 max-line-length = 120
+
+[TYPECHECK]
+ignored-modules=torch
+ignored-classes=torch

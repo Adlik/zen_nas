@@ -1,2 +1,4 @@
 [flake8]
+exclude = src/zen_nas/ModelLoader/geffnet/*.py,src/zen_nas/tf_train_image_classification.py
+ignore = E402
 max-line-length = 120

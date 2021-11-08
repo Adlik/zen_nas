@@ -1,10 +1,18 @@
 # Copyright 2019 ZTE corporation. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
+"""Setup"""
+
 import setuptools
 
 INSTALL_REQUIRES = [
-    'numpy'
+    'numpy',
+    'torch >= 1.8.1',
+    'torchvision >= 0.9.1',
+    'ptflops',
+    'tensorboard >= 1.15',
+    'horovod >= 0.22.1',
+    'apex'
 ]
 
 TEST_REQUIRES = [
@@ -27,5 +35,5 @@ setuptools.setup(
     extras_require={
         'test': TEST_REQUIRES
     },
-    python_requires='>= 3.6'
+    python_requires='>= 3.7'
 )
