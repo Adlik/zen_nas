@@ -13,17 +13,17 @@ Our based code is forked from [ZenNAS](https://github.com/idstcv/ZenNAS).
 
 We mainly made the following changes:
 
-- support horovod, pytorch distributed training
-- code refactoring for evlotionay search, speed up searching
+- support Horovod, PyTorch distributed training
+- code refactoring for evolutionary search, speed up searching
 - repair THCudaTensor sizes too large problem when search latency model
 
 Besides,  as some functions can not work correctly under distributed training, we provide a distributed version.
 
 ## Experimental results
 
-We tested the modified code, and verified its correctness. The results are as follows:
+We tested the modified code and verified its correctness. The results are as follows:
 
-We used apex with mixed precision to complete the training within 5 days on 8 tesla V100 gpus,
+We used apex with mixed precision to complete the training within 5 days on 8 tesla V100 GPUs,
 and the results are consistent with the paper.
 
 |              | paper model accuracy | distributed training accuracy |
@@ -31,10 +31,10 @@ and the results are consistent with the paper.
 | ZenNet-0.1ms |        77.8%         |            77.922%            |
 | ZenNet-0.8ms |        83.0%         |            83.214%            |
 
-Note that the same results can be obtained with horovod, but we took more time to complete the training.
+Note that the same results can be obtained with Horovod, but we took more time to complete the training.
 So we recommend using apex for distributed training.
 
-Before the code was released, we reporduced the paper algorithm and serached model according to the paper's conditions.
+Before the code was released, we reproduced the paper algorithm and searched the model according to the paper's conditions.
 The following table shows the comparison results between the search model and the paper model.
 
 |             | paper accuracy | searched model accuracy |
@@ -43,9 +43,10 @@ The following table shows the comparison results between the search model and th
 | latency05ms |     82.7%      |         82.752%         |
 | latency12ms |     83.6%      |         83.466%         |
 
-For proving the effectiveness of algorithm, we experiment servel different model search, and get the following result.
-We use single tesla V100 GPU to evolve the population 50000 times.
-|    mehtod     |    model    | search time(hours) | model score |
+For proving the effectiveness of the algorithm, we experimented with several different model searches
+and get the following result.
+We use a single Tesla V100 GPU to evolve the population 50000 times.
+|    method     |    model    | search time(hours) | model score |
 | :-----------: | :---------: | :----------------: | :---------: |
 |    ZenNAS     | latency01ms |      98.4274       |   126.038   |
 |        \       | latency05ms |      22.0189       |   243.101   |
@@ -74,7 +75,7 @@ CIFAR-10/CIFAR-100 is stored under \~/data/pytorch\_cifar10 or \~/data/pytorch\_
 ### Pre-trained model download
 
 If you want to evaluate pre-trained models,
-please go to [ZenNAS](https://github.com/idstcv/ZenNAS) to download pre-trained model.
+please go to [ZenNAS](https://github.com/idstcv/ZenNAS) to download the pre-trained model.
 
 ### Evaluate pre-trained models on ImageNet and CIFAR-10/100
 
@@ -85,7 +86,7 @@ python val.py --fp16 --gpu 0 --arch ${zennet_model_name}
 ```
 
 where ${zennet\_model\_name} should be replaced by a valid ZenNet model name.
-The complete list of model names can be found in 'Pre-trained Models' section.
+The complete list of model names can be found in the 'Pre-trained Models' section.
 
 To evaluate the pre-trained model on CIFAR-10 or CIFAR-100 using GPU 0:
 
@@ -107,14 +108,14 @@ model.eval()
 
 ### usage
 
-We supply apex and horovod distributed training scripts, you can modify other original scripts based these scripts.
+We supply apex and Horovod distributed training scripts, you can modify other original scripts based on these scripts.
 apex script:
 
 ```bash
 scripts/Zen_NAS_ImageNet_latency0.1ms_train_apex.sh
 ```
 
-horovod script:
+Horovod script:
 
 ```bash
 scripts/Zen_NAS_ImageNet_latency0.1ms_train.sh
@@ -123,11 +124,11 @@ scripts/Zen_NAS_ImageNet_latency0.1ms_train.sh
 If you want to search model, please notice the choices "--fix_initialize" and "--origin".
 "--fix_initialize" decides how to initialize population, the algorithm default choice is random initialization.
 "--origin" determines how the mutation model is generated.  
-When specify "--origin", the mutated model will be produced using original method.
+When specified "--origin", the mutated model will be produced using the original method.
 
 ### Searching on CIFAR-10/100
 
-Searching for CIFAR-10/100 models with budget params < 1M , using different zero-shot proxies:
+Searching for CIFAR-10/100 models with budget params < 1M, using different zero-shot proxies:
 
 ```bash
 scripts/Flops_NAS_cifar_params1M.sh
@@ -168,7 +169,7 @@ The masternet takes in a structure string and parses it into a PyTorch nn.Module
 The structure string defines the layer structure which is implemented in "PlainNet/*.py" files.
 For example, in "PlainNet/SuperResK1KXK1.py",
 we defined SuperResK1K3K1 block, which consists of multiple layers of ResNet blocks.
-To define your own block, e.g. ABC_Block, first implement "PlainNet/ABC_Block.py".
+To define your block, e.g. ABC_Block, first, implement "PlainNet/ABC_Block.py".
 Then in "PlainNet/\_\_init\_\_.py",  after the last line, append the following lines to register the new block definition:
 
 ```python
@@ -176,7 +177,7 @@ from PlainNet import ABC_Block
 _all_netblocks_dict_ = ABC_Block.register_netblocks_dict(_all_netblocks_dict_)
 ```
 
-After the above registration call, the PlainNet module is able to parse your customized block from structure string.
+After the above registration call, the PlainNet module can parse your customized block from the structure string.
 
 The search space definitions are stored in SearchSpace/*.py. The important function is
 
@@ -188,7 +189,7 @@ block_list is a list of super-blocks parsed by the masternet.
 block_id is the index of the block in block_list which will be replaced later by a mutated block
 This function must return a list of mutated blocks.
 
-### Direct specify serach space
+### Direct specify search space
 
 "PlainNet/AABC_Block.py" has defined the candidate blocks,
 you can directly specify candidate blocks in the search spaces by passing parameters "--search_space_list".
@@ -196,8 +197,9 @@ So you have two methods to specify search spaces.
 Taking ResNet-like search space as an example, you can use "--search_space SearchSpace/search_space_XXBL.py" or
 "--search_space_list PlainNet/SuperResK1KXK1.py PlainNet/SuperResKXKX.py" to specify search space. Both of them are equivalent.
 
-In scripts, when you choose to use first method to specify search space, **you should also add other two parameters "--fix_initialize"and"--origin"**,
-so the algorithm will initialize with fixed model.
+In scripts, when you choose to use the first method to specify search space,
+**you should also add other two parameters "--fix_initialize" and"--origin"**,
+so the algorithm will initialize with a fixed model.
 
 The zero-shot proxies are implemented in "ZeroShotProxy/*.py". The evolutionary algorithm is implemented in "evolution_search.py".
 "analyze_model.py" prints the FLOPs and model size of the given network.
@@ -220,4 +222,4 @@ https://pytorch.org/vision/0.8/_modules/torchvision/models/resnet.html
 
 ## Copyright
 
-Copyright 2019 ZTE corporation. All Rights Reserved.
+Copyright 2021 ZTE corporation. All Rights Reserved.

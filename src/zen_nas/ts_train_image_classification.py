@@ -1,5 +1,5 @@
 '''
-Copyright 2019 ZTE corporation. All Rights Reserved.
+Copyright 2021 ZTE corporation. All Rights Reserved.
 SPDX-License-Identifier: Apache-2.
 
 Support single GPU, horovod, apex with mixed precision distributed training, teacher distillation
